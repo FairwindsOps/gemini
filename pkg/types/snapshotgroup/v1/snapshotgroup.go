@@ -24,8 +24,7 @@ type SnapshotGroupSpec struct {
 }
 
 type SnapshotClaim struct {
-	Existing string                    `json:"existing"`
-	Spec     core.PersistentVolumeSpec `json:"spec"`
+	Spec core.PersistentVolumeSpec `json:"spec"`
 }
 
 type SnapshotSchedule struct {

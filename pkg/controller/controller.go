@@ -4,22 +4,20 @@ import (
 	"fmt"
 	"time"
 
-	clientset "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned"
-	informers "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions/snapshotgroup/v1"
+	"github.com/fairwindsops/photon/pkg/kube"
+	"github.com/fairwindsops/photon/pkg/snapshots"
 	listers "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/listers/snapshotgroup/v1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
 )
 
 type Controller struct {
-	kubeclientset   kubernetes.Interface
-	sampleclientset clientset.Interface
+	client *kube.Client
 
 	sgLister listers.SnapshotGroupLister
 	sgSynced cache.InformerSynced
@@ -27,20 +25,19 @@ type Controller struct {
 	workqueue workqueue.RateLimitingInterface
 }
 
-func NewController(kubeclientset kubernetes.Interface, sampleclientset clientset.Interface, sgInformer informers.SnapshotGroupInformer) *Controller {
+func NewController() *Controller {
+	client := kube.GetClient()
 	controller := &Controller{
-		kubeclientset:   kubeclientset,
-		sampleclientset: sampleclientset,
-		sgLister:        sgInformer.Lister(),
-		sgSynced:        sgInformer.Informer().HasSynced,
-		workqueue:       workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Foos"),
+		sgLister:  client.Informer.Lister(),
+		sgSynced:  client.Informer.Informer().HasSynced,
+		workqueue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Foos"),
 	}
-	sgInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	client.Informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(sg interface{}) {
-			fmt.Println("ADD")
+			controller.enqueue(sg)
 		},
-		UpdateFunc: func(old, new interface{}) {
-			fmt.Println("UPDATE")
+		UpdateFunc: func(old, sg interface{}) {
+			controller.enqueue(sg)
 		},
 	})
 	return controller
@@ -112,7 +109,13 @@ func (c *Controller) syncHandler(key string) error {
 
 		return err
 	}
-	klog.Infof("Found sg %v\n", sg)
+	klog.Infof("Found SnapshotGroup %v\n", sg)
+
+	err = snapshots.AddOrUpdateSnapshotGroup(sg)
+	if err != nil {
+		klog.Warningf("Failed to reconcile SnapshotGroup %s/%s: %v", namespace, name, err)
+	}
+
 	return nil
 }
 
