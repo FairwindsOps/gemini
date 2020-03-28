@@ -27,7 +27,6 @@ func GetClient() *Client {
 	if singleton == nil {
 		singleton = createClient()
 	}
-	fmt.Println("set singleton", singleton)
 	return singleton
 }
 

@@ -1,8 +1,8 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	core "k8s.io/kubernetes/pkg/apis/core"
 )
 
 // +genclient
@@ -24,7 +24,7 @@ type SnapshotGroupSpec struct {
 }
 
 type SnapshotClaim struct {
-	Spec core.PersistentVolumeSpec `json:"spec"`
+	Spec corev1.PersistentVolumeClaimSpec `json:"spec"`
 }
 
 type SnapshotSchedule struct {
