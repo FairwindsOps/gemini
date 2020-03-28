@@ -71,7 +71,7 @@ func (c *snapshotGroups) Get(ctx context.Context, name string, options metav1.Ge
 		Resource("snapshotgroups").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
@@ -88,7 +88,7 @@ func (c *snapshotGroups) List(ctx context.Context, opts metav1.ListOptions) (res
 		Resource("snapshotgroups").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
@@ -105,7 +105,7 @@ func (c *snapshotGroups) Watch(ctx context.Context, opts metav1.ListOptions) (wa
 		Resource("snapshotgroups").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch(ctx)
+		Watch()
 }
 
 // Create takes the representation of a snapshotGroup and creates it.  Returns the server's representation of the snapshotGroup, and an error, if there is any.
@@ -116,7 +116,7 @@ func (c *snapshotGroups) Create(ctx context.Context, snapshotGroup *v1.SnapshotG
 		Resource("snapshotgroups").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(snapshotGroup).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
@@ -130,7 +130,7 @@ func (c *snapshotGroups) Update(ctx context.Context, snapshotGroup *v1.SnapshotG
 		Name(snapshotGroup.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(snapshotGroup).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
@@ -142,7 +142,7 @@ func (c *snapshotGroups) Delete(ctx context.Context, name string, opts metav1.De
 		Resource("snapshotgroups").
 		Name(name).
 		Body(&opts).
-		Do(ctx).
+		Do().
 		Error()
 }
 
@@ -158,7 +158,7 @@ func (c *snapshotGroups) DeleteCollection(ctx context.Context, opts metav1.Delet
 		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(&opts).
-		Do(ctx).
+		Do().
 		Error()
 }
 
@@ -172,7 +172,7 @@ func (c *snapshotGroups) Patch(ctx context.Context, name string, pt types.PatchT
 		SubResource(subresources...).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do(ctx).
+		Do().
 		Into(result)
 	return
 }
