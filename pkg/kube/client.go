@@ -1,7 +1,6 @@
 package kube
 
 import (
-	"fmt"
 	"time"
 
 	snapshotgroupv1 "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"

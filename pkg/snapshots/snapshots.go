@@ -12,6 +12,14 @@ import (
 
 func AddOrUpdateSnapshotGroup(sg *v1.SnapshotGroup) error {
 	klog.Infof("Reconcile SnapshotGroup %s/%s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	err := maybeCreatePVC(sg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func maybeCreatePVC(sg *v1.SnapshotGroup) error {
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})

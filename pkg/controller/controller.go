@@ -109,11 +109,11 @@ func (c *Controller) syncHandler(key string) error {
 
 		return err
 	}
-	klog.Infof("Found SnapshotGroup %v\n", sg)
 
 	err = snapshots.AddOrUpdateSnapshotGroup(sg)
 	if err != nil {
-		klog.Warningf("Failed to reconcile SnapshotGroup %s/%s: %v", namespace, name, err)
+		klog.Errorf("Failed to reconcile SnapshotGroup %s/%s: %v", namespace, name, err)
+		return err
 	}
 
 	return nil
@@ -124,23 +124,23 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	defer c.workqueue.ShutDown()
 
 	// Start the informer factories to begin populating the informer caches
-	fmt.Println("Starting Foo controller")
+	klog.Info("Starting Foo controller")
 
 	// Wait for the caches to be synced before starting workers
-	fmt.Println("Waiting for informer caches to sync")
+	klog.Info("Waiting for informer caches to sync")
 	if ok := cache.WaitForCacheSync(stopCh, c.sgSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
 
-	fmt.Println("Starting workers")
+	klog.Info("Starting workers")
 	// Launch two workers to process Foo resources
 	for i := 0; i < threadiness; i++ {
 		go wait.Until(c.runWorker, time.Second, stopCh)
 	}
 
-	fmt.Println("Started workers")
+	klog.Info("Started workers")
 	<-stopCh
-	fmt.Println("Shutting down workers")
+	klog.Info("Shutting down workers")
 
 	return nil
 }
