@@ -1,4 +1,14 @@
 # photon
+
+## Quickstart
+> Note: haven't managed to get KIND working with VolumeSnapshots
+
+```
+go run main.go &
+k apply -f examples/snapshotgroup.yaml
+k get volumesnapshot --watch
+```
+
 ## Design Doc
 https://paper.dropbox.com/doc/Photon-Design-Doc--AxC2l~E4g1rQkAk5S4haNYtOAg-pWh0uK2eUgNGZSnuK2Lid
 
