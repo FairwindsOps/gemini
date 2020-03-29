@@ -8,6 +8,7 @@ import (
 	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions"
 	informers "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions/snapshotgroup/v1"
 
+	snapshotclient "github.com/kubernetes-csi/external-snapshotter/pkg/client/clientset/versioned"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -18,6 +19,7 @@ type Client struct {
 	ClientSet       clientset.Interface
 	Informer        informers.SnapshotGroupInformer
 	InformerFactory externalversions.SharedInformerFactory
+	SnapshotClient  snapshotclient.Interface
 }
 
 var singleton *Client
@@ -46,6 +48,10 @@ func createClient() *Client {
 	if err != nil {
 		panic(err)
 	}
+	snapshotClientSet, err := snapshotclient.NewForConfig(kubeConf)
+	if err != nil {
+		panic(err)
+	}
 
 	informerFactory := externalversions.NewSharedInformerFactory(clientSet, time.Second*30)
 	informer := informerFactory.Snapshotgroup().V1().SnapshotGroups()
@@ -58,5 +64,6 @@ func createClient() *Client {
 		ClientSet:       clientSet,
 		Informer:        informer,
 		InformerFactory: informerFactory,
+		SnapshotClient:  snapshotClientSet,
 	}
 }
