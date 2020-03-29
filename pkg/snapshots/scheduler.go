@@ -23,7 +23,13 @@ func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []photonSnaps
 	numToKeepByInterval := map[string]int{}
 	numSnapshotsByInterval := map[string]int{}
 	for _, schedule := range schedules {
-		numToKeepByInterval[schedule.Every] = schedule.Keep
+		// Note - we have to keep an "extra" snapshot to cover the whole range
+		// e.g. With "every 1 year, keep 2", on 1/1/2020, we would have snapshots for
+		// - 1/1/2020
+		// - 1/1/2019
+		// - 1/1/2018
+		// So we're convered with 2 full years of backups.
+		numToKeepByInterval[schedule.Every] = schedule.Keep + 1
 	}
 	now := time.Now().UTC()
 
