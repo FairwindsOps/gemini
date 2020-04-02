@@ -72,6 +72,7 @@ func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []photonSnaps
 	return toCreate, toDelete
 }
 
+// ParseInterval parses an interval string as defined by Photon
 func ParseInterval(str string) time.Duration {
 	amt := 1
 	every := str
