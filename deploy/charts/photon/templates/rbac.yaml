@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "photon.fullname" . }}-controller
+  labels:
+    {{- include "photon.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: {{ include "photon.fullname" . }}-controller
+  labels:
+    {{- include "photon.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - photon.fairwinds.com
+    resources:
+      - snapshotgroups
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - delete
+  - apiGroups:
+      - snapshot.storage.k8s.io
+    resources:
+      - volumesnapshots
+    verbs:
+      - get
+      - list
+      - create
+      - delete
+  - apiGroups:
+      - ''
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - get
+      - create
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "photon.fullname" . }}-controller
+  labels:
+    {{- include "photon.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "photon.fullname" . }}-controller
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "photon.fullname" . }}-controller
+    namespace: {{ .Release.Namespace }}

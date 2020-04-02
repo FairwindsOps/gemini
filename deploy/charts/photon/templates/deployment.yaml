@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "photon.fullname" . }}-controller
+  labels:
+    app: photon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: photon
+  template:
+    metadata:
+      labels:
+        app: photon
+    spec:
+      serviceAccountName: {{ include "photon.fullname" . }}-controller
+      containers:
+      - command:
+        - photon
+        image: '{{.Values.image.repository}}:{{.Values.image.tag}}'
+        imagePullPolicy: '{{.Values.image.pullPolicy}}'
+        name: photon-controller
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities:
+            drop:
+              - ALL

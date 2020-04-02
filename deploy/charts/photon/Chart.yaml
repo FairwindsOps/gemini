@@ -1,0 +1,8 @@
+apiVersion: v1
+description: Automated backup and restore of PersistentVolumes using the  VolumeSnapshot API
+name: photon
+version: 0.0.0
+appVersion: 0.0.0
+maintainers:
+  - name: rbren
+    email: robertb@fairwinds.com
