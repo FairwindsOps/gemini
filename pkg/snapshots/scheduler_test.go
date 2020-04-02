@@ -43,3 +43,26 @@ func TestBasicSchedule(t *testing.T) {
 	assert.Equal(t, existing[4], toDelete[0])
 	assert.Equal(t, toCreate, []string{"minute"})
 }
+
+func TestParseInterval(t *testing.T) {
+	testCases := []struct {
+		input  string
+		output time.Duration
+	}{
+		{
+			input:  "1 hour",
+			output: time.Hour,
+		},
+		{
+			input:  "minute",
+			output: time.Minute,
+		},
+		{
+			input:  "3 years",
+			output: time.Hour * 24 * 365 * 3,
+		},
+	}
+	for _, testCase := range testCases {
+		assert.Equal(t, testCase.output, ParseInterval(testCase.input))
+	}
+}
