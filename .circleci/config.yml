@@ -63,7 +63,6 @@ jobs:
       - run: go list ./... | grep -v types | xargs golint -set_exit_status
       - run: go list ./... | grep -v types | xargs go vet
       - run: go test ./pkg/... -coverprofile=coverage.txt -covermode=count
-      - run: go run main.go audit --audit-path ./deploy --set-exit-code-below-score 100 --set-exit-code-on-error
       - *update_coverage
 
   release_images:
