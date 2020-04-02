@@ -54,6 +54,10 @@ func TestParseInterval(t *testing.T) {
 			output: time.Hour,
 		},
 		{
+			input:  "asdfadsf",
+			output: time.Hour,
+		},
+		{
 			input:  "minute",
 			output: time.Minute,
 		},
