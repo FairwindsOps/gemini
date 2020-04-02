@@ -53,21 +53,21 @@ jobs:
       - *docker_build_and_push
 
   test:
-    working_directory: /go/src/github.com/fairwindsops/polaris/
+    working_directory: /go/src/github.com/fairwindsops//
     docker:
       - image: circleci/golang:1.13
     steps:
       - checkout
       - *set_environment_variables
       - run: go get -u golang.org/x/lint/golint
-      - run: go list ./... | grep -v vendor | xargs golint -set_exit_status
-      - run: go list ./... | grep -v vendor | xargs go vet
+      - run: go list ./... | grep -v types | xargs golint -set_exit_status
+      - run: go list ./... | grep -v types | xargs go vet
       - run: go test ./pkg/... -coverprofile=coverage.txt -covermode=count
       - run: go run main.go audit --audit-path ./deploy --set-exit-code-below-score 100 --set-exit-code-on-error
       - *update_coverage
 
   release_images:
-    working_directory: /go/src/github.com/fairwindsops/polaris/
+    working_directory: /go/src/github.com/fairwindsops/photon/
     docker:
       - image: quay.io/reactiveops/ci-images:v8.0-stretch
     steps:

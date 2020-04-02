@@ -16,6 +16,7 @@ import (
 	"k8s.io/klog"
 )
 
+// Controller represents a SnapshotGroup controller
 type Controller struct {
 	client *kube.Client
 
@@ -25,6 +26,7 @@ type Controller struct {
 	workqueue workqueue.RateLimitingInterface
 }
 
+// NewController creates a new SnapshotGroup controller
 func NewController() *Controller {
 	client := kube.GetClient()
 	controller := &Controller{
@@ -119,6 +121,7 @@ func (c *Controller) syncHandler(key string) error {
 	return nil
 }
 
+// Run starts the controller
 func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	defer utilruntime.HandleCrash()
 	defer c.workqueue.ShutDown()

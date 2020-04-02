@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
+// Client provides access to k8s resources
 type Client struct {
 	K8s             kubernetes.Interface
 	ClientSet       clientset.Interface
@@ -24,6 +25,7 @@ type Client struct {
 
 var singleton *Client
 
+// GetClient creates a new Client singleton
 func GetClient() *Client {
 	if singleton == nil {
 		singleton = createClient()

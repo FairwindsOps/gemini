@@ -29,6 +29,7 @@ type photonSnapshot struct {
 	timestamp time.Time
 }
 
+// AddOrUpdateSnapshotGroup handles any changes to SnapshotGroups
 func AddOrUpdateSnapshotGroup(sg *v1.SnapshotGroup) error {
 	klog.Infof("Reconcile SnapshotGroup %s/%s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	err := maybeCreatePVC(sg)
