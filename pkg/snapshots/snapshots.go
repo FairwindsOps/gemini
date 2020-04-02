@@ -41,14 +41,14 @@ func AddOrUpdateSnapshotGroup(sg *v1.SnapshotGroup) error {
 	if err != nil {
 		return err
 	}
+
 	toCreate, toDelete := getSnapshotChanges(sg.Spec.Schedule, snapshots)
-	if len(toCreate) > 0 {
-		err = createSnapshot(sg, toCreate)
-		if err != nil {
-			return err
-		}
-	}
+
 	err = deleteSnapshots(toDelete)
+	if err != nil {
+		return err
+	}
+	err = createSnapshot(sg, toCreate)
 	if err != nil {
 		return err
 	}
@@ -120,6 +120,9 @@ func listSnapshots(sg *v1.SnapshotGroup) ([]photonSnapshot, error) {
 }
 
 func createSnapshot(sg *v1.SnapshotGroup, intervals []string) error {
+	if len(intervals) == 0 {
+		return nil
+	}
 	klog.Infof("Creating snapshot for intervals %v", intervals)
 	now := time.Now().UTC()
 	timestamp := now.Unix()
@@ -158,6 +161,7 @@ func deleteSnapshots(toDelete []photonSnapshot) error {
 		if err != nil {
 			return err
 		}
+		klog.Infof("Deleted snapshot %s", details.Name)
 	}
 	return nil
 }
