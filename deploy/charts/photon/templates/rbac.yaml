@@ -24,20 +24,15 @@ rules:
       - delete
   - apiGroups:
       - snapshot.storage.k8s.io
+      - ''
     resources:
       - volumesnapshots
+      - persistentvolumeclaims
     verbs:
       - get
       - list
       - create
       - delete
-  - apiGroups:
-      - ''
-    resources:
-      - persistentvolumeclaims
-    verbs:
-      - get
-      - list
   - apiGroups:
       - apiextensions.k8s.io
     resources:
