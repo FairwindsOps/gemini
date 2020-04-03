@@ -36,6 +36,7 @@ func ReconcileBackupsForSnapshotGroup(sg *v1.SnapshotGroup) error {
 	return nil
 }
 
+// RestoreSnapshotGroup restores the PV to a particular snapshot
 func RestoreSnapshotGroup(sg *v1.SnapshotGroup) error {
 	restorePoint := sg.ObjectMeta.Annotations[RestoreAnnotation]
 	if restorePoint == "" {
@@ -58,6 +59,7 @@ func RestoreSnapshotGroup(sg *v1.SnapshotGroup) error {
 	return nil
 }
 
+// OnSnapshotGroupDelete is called when a SnapshotGroup is removed
 func OnSnapshotGroupDelete(sg *v1.SnapshotGroup) error {
 	// TODO(rbren): option to delete snapshots on group deletion
 	name := sg.ObjectMeta.Name
