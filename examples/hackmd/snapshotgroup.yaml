@@ -1,0 +1,38 @@
+apiVersion: photon.fairwinds.com/v1
+kind: SnapshotGroup
+metadata:
+  name: hackmd
+  namespace: notepad
+spec:
+  claim:
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+  schedule:
+    - every: "10 minutes"
+      keep: 3
+    - every: hour
+      keep: 1
+---
+apiVersion: photon.fairwinds.com/v1
+kind: SnapshotGroup
+metadata:
+  name: hackmd-postgresql
+  namespace: notepad
+spec:
+  claim:
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 2Gi
+  schedule:
+    - every: "10 minutes"
+      keep: 3
+    - every: hour
+      keep: 1
+

@@ -14,6 +14,7 @@ var durations = map[string]time.Duration{
 	"minute": time.Minute,
 	"hour":   time.Hour,
 	"day":    time.Hour * 24,
+	"week":   time.Hour * 24 * 7,
 	// TODO: get more accurate on month/year
 	"month": time.Hour * 24 * 30,
 	"year":  time.Hour * 24 * 365,
@@ -39,7 +40,7 @@ func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []photonSnaps
 		needsCreation[schedule.Every] = true
 	}
 	for _, snapshot := range snapshots {
-		klog.Infof("Checking snapshot %s", snapshot.snapshot.ObjectMeta.Name)
+		klog.V(9).Infof("Checking snapshot %s", snapshot.snapshot.ObjectMeta.Name)
 		keep := false
 		for _, interval := range snapshot.intervals {
 			if numSnapshotsByInterval[interval] == 0 {
@@ -64,7 +65,7 @@ func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []photonSnaps
 
 	toCreate := []string{}
 	for k, v := range needsCreation {
-		klog.Infof("Need creation for interval %s: %t", k, v)
+		klog.V(9).Infof("Need creation for interval %s: %t", k, v)
 		if v {
 			toCreate = append(toCreate, k)
 		}
@@ -89,7 +90,7 @@ func ParseInterval(str string) time.Duration {
 	every = strings.TrimSuffix(every, "s")
 	duration, ok := durations[every]
 	if !ok {
-		klog.Errorf("Could not parse interval %s", str)
+		klog.Errorf("Could not find duration for interval %s", str)
 		duration = time.Hour
 	}
 	return time.Duration(amt) * duration
