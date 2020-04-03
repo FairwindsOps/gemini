@@ -9,7 +9,7 @@ charts:
     namespace: notepad
     values:
       postgresql:
-        postgresqlPassword: $HACKMD_POSTGRES_PASSWORD
+        postgresqlPassword: thisisnotasecret
         persistence:
           existingClaim: hackmd-postgresql
       persistence:
