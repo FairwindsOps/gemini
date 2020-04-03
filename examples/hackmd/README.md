@@ -1,4 +1,5 @@
 # Photon Example: HackMD
+> Note: this will not work in a KIND cluster. It has been tested on DigitalOcean.
 
 ### Install the controller
 ```
@@ -8,6 +9,7 @@ helm install photon deploy/charts/photon --namespace photon
 
 ### Create the `snapshotgroup`
 ```
+kubectl create ns notepad
 kubectl apply -f examples/hackmd/snapshotgroup.yaml -n notepad
 ```
 
