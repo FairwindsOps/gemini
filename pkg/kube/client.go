@@ -4,7 +4,7 @@ import (
 	"time"
 
 	snapshotgroupv1 "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
-	clientset "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned"
+	snapshotGroupClientset "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned"
 	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions"
 	informers "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions/snapshotgroup/v1"
 
@@ -17,7 +17,7 @@ import (
 // Client provides access to k8s resources
 type Client struct {
 	K8s             kubernetes.Interface
-	ClientSet       clientset.Interface
+	ClientSet       snapshotGroupClientset.Interface
 	Informer        informers.SnapshotGroupInformer
 	InformerFactory externalversions.SharedInformerFactory
 	SnapshotClient  snapshotclient.Interface
@@ -46,7 +46,7 @@ func createClient() *Client {
 	if err != nil {
 		panic(err)
 	}
-	clientSet, err := clientset.NewForConfig(kubeConf)
+	clientSet, err := snapshotGroupClientset.NewForConfig(kubeConf)
 	if err != nil {
 		panic(err)
 	}

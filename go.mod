@@ -10,7 +10,7 @@ require (
 	k8s.io/api v0.18.0
 	k8s.io/apiextensions-apiserver v0.17.2
 	k8s.io/apimachinery v0.18.0
-	k8s.io/client-go v0.18.0
+	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/kubernetes v1.15.0
 	k8s.io/sample-controller v0.18.0

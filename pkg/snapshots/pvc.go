@@ -38,7 +38,7 @@ func maybeCreatePVC(sg *v1.SnapshotGroup) error {
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		klog.Infof("PVC %s not found, creating it", pvc.ObjectMeta.Name)
+		klog.Infof("PVC %s not found, creating it", sg.ObjectMeta.Name)
 		err := createPVC(sg, sg.Spec.Claim.Spec, nil)
 		if err != nil {
 			return err
