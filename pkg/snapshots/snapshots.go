@@ -9,7 +9,7 @@ import (
 	"github.com/fairwindsops/photon/pkg/kube"
 	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
 
-	snapshotsv1 "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"
+	snapshotsv1 "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
