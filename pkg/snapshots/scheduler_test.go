@@ -16,29 +16,30 @@ func TestBasicSchedule(t *testing.T) {
 	}
 	start := time.Now().Add(time.Minute * -5)
 
-	existing := []photonSnapshot{
-		photonSnapshot{
-			intervals: []string{"minute"},
-			timestamp: start.Add(time.Minute * 4),
+	existing := []PhotonSnapshot{
+		PhotonSnapshot{
+			Intervals: []string{"minute"},
+			Timestamp: start.Add(time.Minute * 4),
 		},
-		photonSnapshot{
-			intervals: []string{"minute"},
-			timestamp: start.Add(time.Minute * 3),
+		PhotonSnapshot{
+			Intervals: []string{"minute"},
+			Timestamp: start.Add(time.Minute * 3),
 		},
-		photonSnapshot{
-			intervals: []string{"minute"},
-			timestamp: start.Add(time.Minute * 2),
+		PhotonSnapshot{
+			Intervals: []string{"minute"},
+			Timestamp: start.Add(time.Minute * 2),
 		},
-		photonSnapshot{
-			intervals: []string{"minute"},
-			timestamp: start.Add(time.Minute),
+		PhotonSnapshot{
+			Intervals: []string{"minute"},
+			Timestamp: start.Add(time.Minute),
 		},
-		photonSnapshot{
-			intervals: []string{"minute"},
-			timestamp: start,
+		PhotonSnapshot{
+			Intervals: []string{"minute"},
+			Timestamp: start,
 		},
 	}
-	toCreate, toDelete := getSnapshotChanges([]v1.SnapshotSchedule{schedule}, existing)
+	toCreate, toDelete, err := getSnapshotChanges([]v1.SnapshotSchedule{schedule}, existing)
+	assert.NoError(t, err)
 	assert.Equal(t, 1, len(toDelete))
 	assert.Equal(t, existing[4], toDelete[0])
 	assert.Equal(t, toCreate, []string{"minute"})
@@ -48,14 +49,15 @@ func TestParseInterval(t *testing.T) {
 	testCases := []struct {
 		input  string
 		output time.Duration
+		err    bool
 	}{
 		{
 			input:  "1 hour",
 			output: time.Hour,
 		},
 		{
-			input:  "asdfadsf",
-			output: time.Hour,
+			input: "asdfadsf",
+			err:   true,
 		},
 		{
 			input:  "minute",
@@ -67,6 +69,12 @@ func TestParseInterval(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		assert.Equal(t, testCase.output, ParseInterval(testCase.input))
+		interval, err := ParseInterval(testCase.input)
+		if testCase.err {
+			assert.Error(t, err)
+		} else {
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.output, interval)
+		}
 	}
 }

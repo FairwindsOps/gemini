@@ -15,36 +15,22 @@ import (
 	"k8s.io/klog"
 )
 
-// GroupNameAnnotation contains the name of the SnapshotGroup associated with this VolumeSnapshot
-const GroupNameAnnotation = "photon.fairwinds.com/group"
-
-// IntervalsAnnotation contains the intervals that the VolumeSnapshot represents
-const IntervalsAnnotation = "photon.fairwinds.com/intervals"
-
-// TimestampAnnotation contains the timestamp of the VolumeSnapshot
-const TimestampAnnotation = "photon.fairwinds.com/timestamp"
-
-// RestoreAnnotation contains the restore point of the SnapshotGroup
-const RestoreAnnotation = "photon.fairwinds.com/restore"
-
-const managedByAnnotation = "app.kubernetes.io/managed-by"
-const managerName = "photon"
-const intervalsSeparator = ", "
-
-type photonSnapshot struct {
-	intervals []string
-	snapshot  snapshotsv1.VolumeSnapshot
-	timestamp time.Time
-	restore   string
+// PhotonSnapshot represents a VolumeSnapshot created by Photon
+type PhotonSnapshot struct {
+	Intervals []string
+	Snapshot  snapshotsv1.VolumeSnapshot
+	Timestamp time.Time
+	Restore   string
 }
 
-func listSnapshots(sg *v1.SnapshotGroup) ([]photonSnapshot, error) {
+// ListSnapshots returns all snapshots associated with a particular SnapshotGroup
+func ListSnapshots(sg *v1.SnapshotGroup) ([]PhotonSnapshot, error) {
 	client := kube.GetClient()
 	snapshots, err := client.SnapshotClient.SnapshotV1alpha1().VolumeSnapshots(sg.ObjectMeta.Namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	photonSnapshots := []photonSnapshot{}
+	PhotonSnapshots := []PhotonSnapshot{}
 	for _, snapshot := range snapshots.Items {
 		if managedBy, ok := snapshot.ObjectMeta.Annotations[managedByAnnotation]; !ok || managedBy != managerName {
 			continue
@@ -58,21 +44,26 @@ func listSnapshots(sg *v1.SnapshotGroup) ([]photonSnapshot, error) {
 			klog.Errorf("Failed to parse unix timestamp %s for %s", timestampStr, snapshot.ObjectMeta.Name)
 			continue
 		}
-		intervals := strings.Split(snapshot.ObjectMeta.Annotations[IntervalsAnnotation], intervalsSeparator)
-		photonSnapshots = append(photonSnapshots, photonSnapshot{
-			snapshot:  snapshot,
-			timestamp: time.Unix(int64(timestamp), 0),
-			intervals: intervals,
-			restore:   snapshot.ObjectMeta.Annotations[RestoreAnnotation],
+		intervals := []string{}
+		intervalsStr := snapshot.ObjectMeta.Annotations[IntervalsAnnotation]
+		if intervalsStr != "" {
+			intervals = strings.Split(intervalsStr, intervalsSeparator)
+		}
+		PhotonSnapshots = append(PhotonSnapshots, PhotonSnapshot{
+			Snapshot:  snapshot,
+			Timestamp: time.Unix(int64(timestamp), 0),
+			Intervals: intervals,
+			Restore:   snapshot.ObjectMeta.Annotations[RestoreAnnotation],
 		})
 	}
-	klog.Infof("Found %d snapshots for SnapshotGroup %s", len(photonSnapshots), sg.ObjectMeta.Name)
-	sort.Slice(photonSnapshots, func(i, j int) bool {
-		return photonSnapshots[j].timestamp.Before(photonSnapshots[i].timestamp)
+	klog.Infof("Found %d snapshots for SnapshotGroup %s", len(PhotonSnapshots), sg.ObjectMeta.Name)
+	sort.Slice(PhotonSnapshots, func(i, j int) bool {
+		return PhotonSnapshots[j].Timestamp.Before(PhotonSnapshots[i].Timestamp)
 	})
-	return photonSnapshots, nil
+	return PhotonSnapshots, nil
 }
 
+// createSnapshot creates a new snappshot for a given SnapshotGroup
 func createSnapshot(sg *v1.SnapshotGroup, annotations map[string]string) error {
 	timestamp := strconv.Itoa(int(time.Now().Unix()))
 	annotations[TimestampAnnotation] = timestamp
@@ -111,12 +102,13 @@ func createSnapshotForIntervals(sg *v1.SnapshotGroup, intervals []string) error 
 
 func createSnapshotForRestore(sg *v1.SnapshotGroup) error {
 	restore := sg.ObjectMeta.Annotations[RestoreAnnotation]
-	existing, err := listSnapshots(sg)
+	existing, err := ListSnapshots(sg)
 	if err != nil {
 		return err
 	}
 	for _, snapshot := range existing {
-		if snapshot.restore == restore {
+		if snapshot.Restore == restore {
+			klog.Infof("Snapshot already exists for timestamp %s", restore)
 			return nil
 		}
 	}
@@ -127,11 +119,11 @@ func createSnapshotForRestore(sg *v1.SnapshotGroup) error {
 	return createSnapshot(sg, annotations)
 }
 
-func deleteSnapshots(toDelete []photonSnapshot) error {
+func deleteSnapshots(toDelete []PhotonSnapshot) error {
 	klog.Infof("Deleting %d expired snapshots", len(toDelete))
 	client := kube.GetClient()
 	for _, snapshot := range toDelete {
-		details := snapshot.snapshot.ObjectMeta
+		details := snapshot.Snapshot.ObjectMeta
 		snapClient := client.SnapshotClient.SnapshotV1alpha1().VolumeSnapshots(details.Namespace)
 		err := snapClient.Delete(details.Name, &metav1.DeleteOptions{})
 		if err != nil {

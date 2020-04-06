@@ -1,6 +1,8 @@
 package snapshots
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,13 +40,16 @@ func maybeCreatePVC(sg *v1.SnapshotGroup) error {
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		klog.Infof("PVC %s not found, creating it", sg.ObjectMeta.Name)
+		klog.Infof("PVC %s/%s not found, creating it", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 		err := createPVC(sg, sg.Spec.Claim.Spec, nil)
 		if err != nil {
 			return err
 		}
 	} else {
-		klog.Infof("Found pvc %s", pvc.ObjectMeta.Name)
+		klog.Infof("Found pvc %s/%s", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
+		if pvc.ObjectMeta.Annotations[managedByAnnotation] != managerName {
+			return fmt.Errorf("PVC %s/%s found, but not managed by Photon", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
+		}
 	}
 	return nil
 }
