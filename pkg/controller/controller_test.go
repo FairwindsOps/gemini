@@ -37,13 +37,13 @@ func newSnapshotGroup(name string) *v1.SnapshotGroup {
 	}
 }
 
-func newController() *Controller {
+func newTestController() *Controller {
 	kube.SetFakeClient()
 	return NewController()
 }
 
 func TestBackupHandler(t *testing.T) {
-	ctrl := newController()
+	ctrl := newTestController()
 	sg := newSnapshotGroup("foo")
 	snaps, err := snapshots.ListSnapshots(sg)
 	assert.NoError(t, err)
@@ -96,7 +96,7 @@ func TestBackupHandler(t *testing.T) {
 }
 
 func TestRestoreHandler(t *testing.T) {
-	ctrl := newController()
+	ctrl := newTestController()
 	sg := newSnapshotGroup("foo")
 	snaps, err := snapshots.ListSnapshots(sg)
 	assert.NoError(t, err)
@@ -143,7 +143,7 @@ func TestRestoreHandler(t *testing.T) {
 }
 
 func TestDeleteHandler(t *testing.T) {
-	ctrl := newController()
+	ctrl := newTestController()
 
 	event := workItem{
 		name:          "foo",
