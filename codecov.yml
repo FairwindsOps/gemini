@@ -1,0 +1,5 @@
+comment: false
+coverage:
+  range: 50...80
+ignore:
+  - pkg/types
