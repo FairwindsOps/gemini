@@ -26,7 +26,10 @@ references:
         go get -u golang.org/x/lint/golint
         go list ./... | grep -v types | xargs golint -set_exit_status
         go list ./... | grep -v types | xargs go vet
-        go test ./pkg/... -coverprofile=coverage.txt -covermode=count
+
+        go get -u gotest.tools/gotestsum
+        mkdir -p /tmp/test-results/go
+        gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
         bash <(curl -s https://codecov.io/bash)
 
   docker_build_and_push: &docker_build_and_push
