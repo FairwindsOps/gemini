@@ -14,6 +14,7 @@ import (
 
 var noResync = func() time.Duration { return 0 }
 
+// SetFakeClient sets the singleton to a dummy client
 func SetFakeClient() *Client {
 	singleton = createFakeClient()
 	return singleton
