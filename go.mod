@@ -4,9 +4,8 @@ go 1.13
 
 require (
 	github.com/container-storage-interface/spec v1.1.0
-	github.com/kubernetes-csi/external-snapshotter v1.2.2
-	github.com/kubernetes-incubator/external-storage v5.5.0+incompatible
-	github.com/stretchr/testify v1.3.0
+	github.com/kubernetes-csi/external-snapshotter v1.2.1-0.20200106204216-fd8d8a33ddb5
+	github.com/stretchr/testify v1.4.0
 	k8s.io/api v0.18.0
 	k8s.io/apiextensions-apiserver v0.17.2
 	k8s.io/apimachinery v0.18.0
