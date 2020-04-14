@@ -9,8 +9,7 @@ import (
 	"github.com/fairwindsops/photon/pkg/kube"
 	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
 
-	snapshotsv1 "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
+	snapshotsv1 "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 )
@@ -26,7 +25,7 @@ type PhotonSnapshot struct {
 // ListSnapshots returns all snapshots associated with a particular SnapshotGroup
 func ListSnapshots(sg *v1.SnapshotGroup) ([]PhotonSnapshot, error) {
 	client := kube.GetClient()
-	snapshots, err := client.SnapshotClient.SnapshotV1alpha1().VolumeSnapshots(sg.ObjectMeta.Namespace).List(metav1.ListOptions{})
+	snapshots, err := client.SnapshotClient.SnapshotV1beta1().VolumeSnapshots(sg.ObjectMeta.Namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -77,14 +76,13 @@ func createSnapshot(sg *v1.SnapshotGroup, annotations map[string]string) error {
 			Annotations: annotations,
 		},
 		Spec: snapshotsv1.VolumeSnapshotSpec{
-			Source: &corev1.TypedLocalObjectReference{
-				Name: sg.ObjectMeta.Name,
-				Kind: "PersistentVolumeClaim",
+			Source: snapshotsv1.VolumeSnapshotSource{
+				PersistentVolumeClaimName: &sg.ObjectMeta.Name,
 			},
 		},
 	}
 	client := kube.GetClient()
-	snapClient := client.SnapshotClient.SnapshotV1alpha1().VolumeSnapshots(snapshot.ObjectMeta.Namespace)
+	snapClient := client.SnapshotClient.SnapshotV1beta1().VolumeSnapshots(snapshot.ObjectMeta.Namespace)
 	_, err := snapClient.Create(&snapshot)
 	return err
 }
@@ -124,7 +122,7 @@ func deleteSnapshots(toDelete []PhotonSnapshot) error {
 	client := kube.GetClient()
 	for _, snapshot := range toDelete {
 		details := snapshot.Snapshot.ObjectMeta
-		snapClient := client.SnapshotClient.SnapshotV1alpha1().VolumeSnapshots(details.Namespace)
+		snapClient := client.SnapshotClient.SnapshotV1beta1().VolumeSnapshots(details.Namespace)
 		err := snapClient.Delete(details.Name, &metav1.DeleteOptions{})
 		if err != nil {
 			return err
