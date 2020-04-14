@@ -42,6 +42,14 @@ func newTestController() *Controller {
 	return NewController()
 }
 
+func TestControllerQueue(t *testing.T) {
+	ctrl := newTestController()
+	sg := newSnapshotGroup("foo")
+	ctrl.enqueue(sg, deleteTask)
+	processed := ctrl.processNextWorkItem()
+	assert.Equal(t, true, processed)
+}
+
 func TestBackupHandler(t *testing.T) {
 	ctrl := newTestController()
 	sg := newSnapshotGroup("foo")
