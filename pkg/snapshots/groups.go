@@ -17,12 +17,15 @@ func ReconcileBackupsForSnapshotGroup(sg *v1.SnapshotGroup) error {
 		return err
 	}
 
-	snapshots, err := listSnapshots(sg)
+	snapshots, err := ListSnapshots(sg)
 	if err != nil {
 		return err
 	}
 
-	toCreate, toDelete := getSnapshotChanges(sg.Spec.Schedule, snapshots)
+	toCreate, toDelete, err := getSnapshotChanges(sg.Spec.Schedule, snapshots)
+	if err != nil {
+		return err
+	}
 
 	err = deleteSnapshots(toDelete)
 	if err != nil {

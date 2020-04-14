@@ -1,6 +1,7 @@
 package snapshots
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 )
 
 var durations = map[string]time.Duration{
+	"second": time.Second,
 	"minute": time.Minute,
 	"hour":   time.Hour,
 	"day":    time.Hour * 24,
@@ -20,7 +22,7 @@ var durations = map[string]time.Duration{
 	"year":  time.Hour * 24 * 365,
 }
 
-func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []photonSnapshot) ([]string, []photonSnapshot) {
+func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []PhotonSnapshot) ([]string, []PhotonSnapshot, error) {
 	numToKeepByInterval := map[string]int{}
 	numSnapshotsByInterval := map[string]int{}
 	for _, schedule := range schedules {
@@ -34,18 +36,22 @@ func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []photonSnaps
 	}
 	now := time.Now().UTC()
 
-	toDelete := []photonSnapshot{}
+	toDelete := []PhotonSnapshot{}
 	needsCreation := map[string]bool{}
 	for _, schedule := range schedules {
 		needsCreation[schedule.Every] = true
 	}
 	for _, snapshot := range snapshots {
-		klog.V(9).Infof("Checking snapshot %s", snapshot.snapshot.ObjectMeta.Name)
+		klog.V(9).Infof("Checking snapshot %s", snapshot.Snapshot.ObjectMeta.Name)
 		keep := false
-		for _, interval := range snapshot.intervals {
+		for _, interval := range snapshot.Intervals {
 			if numSnapshotsByInterval[interval] == 0 {
+				parsed, err := ParseInterval(interval)
+				if err != nil {
+					return nil, nil, err
+				}
 				// This is the latest snapshot
-				nextSnapshotTime := snapshot.timestamp.Add(ParseInterval(interval))
+				nextSnapshotTime := snapshot.Timestamp.Add(parsed)
 				if nextSnapshotTime.Before(now) {
 					klog.Infof("  stale for interval %s", interval)
 					numSnapshotsByInterval[interval]++
@@ -70,11 +76,11 @@ func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []photonSnaps
 			toCreate = append(toCreate, k)
 		}
 	}
-	return toCreate, toDelete
+	return toCreate, toDelete, nil
 }
 
 // ParseInterval parses an interval string as defined by Photon
-func ParseInterval(str string) time.Duration {
+func ParseInterval(str string) (time.Duration, error) {
 	amt := 1
 	every := str
 	parts := strings.Split(str, " ")
@@ -83,15 +89,13 @@ func ParseInterval(str string) time.Duration {
 		var err error
 		amt, err = strconv.Atoi(parts[0])
 		if err != nil {
-			klog.Errorf("Could not parse interval %s", str)
-			amt = 1
+			return time.Hour, fmt.Errorf("Could not parse interval %s", str)
 		}
 	}
 	every = strings.TrimSuffix(every, "s")
 	duration, ok := durations[every]
 	if !ok {
-		klog.Errorf("Could not find duration for interval %s", str)
-		duration = time.Hour
+		return time.Hour, fmt.Errorf("Could not find duration for interval %s", str)
 	}
-	return time.Duration(amt) * duration
+	return time.Duration(amt) * duration, nil
 }

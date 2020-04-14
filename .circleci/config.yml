@@ -19,15 +19,18 @@ references:
         echo 'export GO111MODULE=on' >> ${BASH_ENV}
 
 
-  update_coverage: &update_coverage
+  go_test: &go_test
     run:
-      name: Update Coverage
+      name: Test Golang
       command: |
-        if [[ -z $CIRCLE_PR_NUMBER ]]; then
-          bash <(curl -s https://codecov.io/bash)
-        else
-          echo "Skipping coverage for forked PR"
-        fi
+        go get -u golang.org/x/lint/golint
+        go list ./... | grep -v types | xargs golint -set_exit_status
+        go list ./... | grep -v types | xargs go vet
+
+        go get -u gotest.tools/gotestsum
+        mkdir -p /tmp/test-results/go
+        gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
+        bash <(curl -s https://codecov.io/bash)
 
   docker_build_and_push: &docker_build_and_push
     run:
@@ -53,27 +56,13 @@ jobs:
       - *docker_build_and_push
 
   test:
-    working_directory: /go/src/github.com/fairwindsops//
+    working_directory: /go/src/github.com/fairwindsops/photon/
     docker:
       - image: circleci/golang:1.13
     steps:
       - checkout
       - *set_environment_variables
-      - run: go get -u golang.org/x/lint/golint
-      - run: go list ./... | grep -v types | xargs golint -set_exit_status
-      - run: go list ./... | grep -v types | xargs go vet
-      - run: go test ./pkg/... -coverprofile=coverage.txt -covermode=count
-      - *update_coverage
-
-  release_images:
-    working_directory: /go/src/github.com/fairwindsops/photon/
-    docker:
-      - image: quay.io/reactiveops/ci-images:v8.0-stretch
-    steps:
-      - checkout
-      - setup_remote_docker
-      - *set_environment_variables
-      - *docker_build_and_push
+      - *go_test
 
 workflows:
   version: 2
@@ -84,17 +73,15 @@ workflows:
           requires:
             - test
           context: org-global
-          # Allow using testing tags for testing circle test + build steps
           filters:
             tags:
               only: /^testing-.*/
   release:
     jobs:
-      - release_images:
+      - build:
           context: org-global
           filters:
             branches:
               ignore: /.*/
-            # Testing tags are reserved for testing circle test + build steps
             tags:
               ignore: /^testing-.*/
