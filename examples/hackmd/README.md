@@ -13,12 +13,12 @@ kubectl create ns notepad
 kubectl apply -f examples/hackmd/snapshotgroup.yaml -n notepad
 ```
 
-This will create two PVCs to be used by HackMD:
+This will create two PVCs to be used by HackMD. They will stay in `Pending` status until we create the application.
 ```
-$ kubectl get pvc -n notepad
-NAME                STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS       AGE
-hackmd              Bound    pvc-c9c8c0ec-2d65-4f8e-b6eb-8a41c775509c   1Gi        RWO            do-block-storage   44s
-hackmd-postgresql   Bound    pvc-899196f9-560b-477f-a914-986fc6a386d3   2Gi        RWO            do-block-storage   44s
+$ k get pvc
+NAME                STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+hackmd              Pending                                      gp2            44s
+hackmd-postgresql   Pending                                      gp2            44s
 ```
 
 
