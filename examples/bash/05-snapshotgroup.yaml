@@ -1,0 +1,18 @@
+apiVersion: photon.fairwinds.com/v1
+kind: SnapshotGroup
+metadata:
+  name: ebs-photon-testing
+  namespace: ebs-photon-testing
+spec:
+  claim:
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+  schedule:
+    - every: "10 minutes"
+      keep: 3
+    - every: hour
+      keep: 1
