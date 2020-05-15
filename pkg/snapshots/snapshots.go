@@ -39,20 +39,21 @@ func ListSnapshots(sg *v1.SnapshotGroup) ([]PhotonSnapshot, error) {
 		if err != nil {
 			return nil, err
 		}
-		if managedBy, ok := snapshotMeta.GetAnnotations()[managedByAnnotation]; !ok || managedBy != managerName {
+		annotations := snapshotMeta.GetAnnotations()
+		if managedBy, ok := annotations[managedByAnnotation]; !ok || managedBy != managerName {
 			continue
 		}
-		if snapshotMeta.GetAnnotations()[GroupNameAnnotation] != sg.ObjectMeta.Name {
+		if annotations[GroupNameAnnotation] != sg.ObjectMeta.Name {
 			continue
 		}
-		timestampStr := snapshotMeta.GetAnnotations()[TimestampAnnotation]
+		timestampStr := annotations[TimestampAnnotation]
 		timestamp, err := strconv.Atoi(timestampStr)
 		if err != nil {
 			klog.Errorf("Failed to parse unix timestamp %s for %s", timestampStr, snapshotMeta.GetName())
 			continue
 		}
 		intervals := []string{}
-		intervalsStr := snapshotMeta.GetAnnotations()[IntervalsAnnotation]
+		intervalsStr := annotations[IntervalsAnnotation]
 		if intervalsStr != "" {
 			intervals = strings.Split(intervalsStr, intervalsSeparator)
 		}
@@ -61,7 +62,7 @@ func ListSnapshots(sg *v1.SnapshotGroup) ([]PhotonSnapshot, error) {
 			Name:      snapshotMeta.GetName(),
 			Timestamp: time.Unix(int64(timestamp), 0),
 			Intervals: intervals,
-			Restore:   snapshotMeta.GetAnnotations()[RestoreAnnotation],
+			Restore:   annotations[RestoreAnnotation],
 		})
 	}
 	klog.Infof("Found %d snapshots for SnapshotGroup %s", len(PhotonSnapshots), sg.ObjectMeta.Name)
