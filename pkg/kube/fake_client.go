@@ -4,8 +4,9 @@ import (
 	"time"
 
 	snapshotsFake "github.com/kubernetes-csi/external-snapshotter/pkg/client/clientset/versioned/fake"
-	apiextensionsFake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
-	"k8s.io/apimachinery/pkg/runtime"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	dynamicFake "k8s.io/client-go/dynamic/fake"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 
 	snapshotGroupsFake "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned/fake"
@@ -21,18 +22,22 @@ func SetFakeClient() *Client {
 }
 
 func createFakeClient() *Client {
-	objects := []runtime.Object{}
+	objects := []k8sruntime.Object{}
 	k8s := k8sfake.NewSimpleClientset(objects...)
-	_ = apiextensionsFake.NewSimpleClientset(objects...)
-	snapshotClientSet := snapshotsFake.NewSimpleClientset(objects...)
+	_ = snapshotsFake.NewSimpleClientset(objects...)
+
 	snapshotGroupClientSet := snapshotGroupsFake.NewSimpleClientset(objects...)
 	informerFactory := snapshotGroupExternalVersions.NewSharedInformerFactory(snapshotGroupClientSet, noResync())
 	informer := informerFactory.Snapshotgroup().V1().SnapshotGroups()
+
+	dynamic := dynamicFake.NewSimpleDynamicClient(k8sruntime.NewScheme())
+	snapshotClient := dynamic.Resource(schema.GroupVersionResource{VolumeSnapshotGroupName, "v1beta1", VolumeSnapshotKind})
+
 	return &Client{
 		K8s:             k8s,
 		ClientSet:       snapshotGroupClientSet,
 		Informer:        informer,
 		InformerFactory: informerFactory,
-		SnapshotClient:  snapshotClientSet,
+		SnapshotClient:  snapshotClient,
 	}
 }

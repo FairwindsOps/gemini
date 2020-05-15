@@ -1,6 +1,7 @@
 package snapshots
 
 import (
+	"encoding/json"
 	"sort"
 	"strconv"
 	"strings"
@@ -10,49 +11,52 @@ import (
 	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
 
 	snapshotsv1 "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1beta1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/klog"
 )
 
 // PhotonSnapshot represents a VolumeSnapshot created by Photon
 type PhotonSnapshot struct {
-	Intervals []string
-	Snapshot  snapshotsv1.VolumeSnapshot
-	Timestamp time.Time
-	Restore   string
+	Intervals    []string
+	SnapshotMeta metav1.Object
+	Timestamp    time.Time
+	Restore      string
 }
 
 // ListSnapshots returns all snapshots associated with a particular SnapshotGroup
 func ListSnapshots(sg *v1.SnapshotGroup) ([]PhotonSnapshot, error) {
 	client := kube.GetClient()
-	snapshots, err := client.SnapshotClient.SnapshotV1beta1().VolumeSnapshots(sg.ObjectMeta.Namespace).List(metav1.ListOptions{})
+	snapshots, err := client.SnapshotClient.Namespace(sg.ObjectMeta.Namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 	PhotonSnapshots := []PhotonSnapshot{}
 	for _, snapshot := range snapshots.Items {
-		if managedBy, ok := snapshot.ObjectMeta.Annotations[managedByAnnotation]; !ok || managedBy != managerName {
+		snapshotMeta, err := meta.Accessor(&snapshot)
+		if managedBy, ok := snapshotMeta.GetAnnotations()[managedByAnnotation]; !ok || managedBy != managerName {
 			continue
 		}
-		if snapshot.ObjectMeta.Annotations[GroupNameAnnotation] != sg.ObjectMeta.Name {
+		if snapshotMeta.GetAnnotations()[GroupNameAnnotation] != sg.ObjectMeta.Name {
 			continue
 		}
-		timestampStr := snapshot.ObjectMeta.Annotations[TimestampAnnotation]
+		timestampStr := snapshotMeta.GetAnnotations()[TimestampAnnotation]
 		timestamp, err := strconv.Atoi(timestampStr)
 		if err != nil {
-			klog.Errorf("Failed to parse unix timestamp %s for %s", timestampStr, snapshot.ObjectMeta.Name)
+			klog.Errorf("Failed to parse unix timestamp %s for %s", timestampStr, snapshotMeta.GetName())
 			continue
 		}
 		intervals := []string{}
-		intervalsStr := snapshot.ObjectMeta.Annotations[IntervalsAnnotation]
+		intervalsStr := snapshotMeta.GetAnnotations()[IntervalsAnnotation]
 		if intervalsStr != "" {
 			intervals = strings.Split(intervalsStr, intervalsSeparator)
 		}
 		PhotonSnapshots = append(PhotonSnapshots, PhotonSnapshot{
-			Snapshot:  snapshot,
-			Timestamp: time.Unix(int64(timestamp), 0),
-			Intervals: intervals,
-			Restore:   snapshot.ObjectMeta.Annotations[RestoreAnnotation],
+			SnapshotMeta: snapshotMeta,
+			Timestamp:    time.Unix(int64(timestamp), 0),
+			Intervals:    intervals,
+			Restore:      snapshotMeta.GetAnnotations()[RestoreAnnotation],
 		})
 	}
 	klog.Infof("Found %d snapshots for SnapshotGroup %s", len(PhotonSnapshots), sg.ObjectMeta.Name)
@@ -81,9 +85,22 @@ func createSnapshot(sg *v1.SnapshotGroup, annotations map[string]string) error {
 			},
 		},
 	}
+	marshaled, err := json.Marshal(snapshot)
+	if err != nil {
+		return err
+	}
+	unst := unstructured.Unstructured{
+		Object: map[string]interface{}{},
+	}
+	err = json.Unmarshal(marshaled, &unst.Object)
+	if err != nil {
+		return err
+	}
 	client := kube.GetClient()
-	snapClient := client.SnapshotClient.SnapshotV1beta1().VolumeSnapshots(snapshot.ObjectMeta.Namespace)
-	_, err := snapClient.Create(&snapshot)
+	unst.Object["kind"] = "VolumeSnapshot"
+	unst.Object["apiVersion"] = client.VolumeSnapshotVersion
+	snapClient := client.SnapshotClient.Namespace(snapshot.ObjectMeta.Namespace)
+	_, err = snapClient.Create(&unst, metav1.CreateOptions{})
 	return err
 }
 
@@ -121,13 +138,13 @@ func deleteSnapshots(toDelete []PhotonSnapshot) error {
 	klog.Infof("Deleting %d expired snapshots", len(toDelete))
 	client := kube.GetClient()
 	for _, snapshot := range toDelete {
-		details := snapshot.Snapshot.ObjectMeta
-		snapClient := client.SnapshotClient.SnapshotV1beta1().VolumeSnapshots(details.Namespace)
-		err := snapClient.Delete(details.Name, &metav1.DeleteOptions{})
+		details := snapshot.SnapshotMeta
+		snapClient := client.SnapshotClient.Namespace(details.GetNamespace())
+		err := snapClient.Delete(details.GetName(), &metav1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
-		klog.Infof("Deleted snapshot %s", details.Name)
+		klog.Infof("Deleted snapshot %s", details.GetName())
 	}
 	return nil
 }
