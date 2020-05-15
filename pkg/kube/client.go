@@ -25,7 +25,6 @@ const (
 // Client provides access to k8s resources
 type Client struct {
 	K8s                   kubernetes.Interface
-	ClientSet             snapshotGroupClientset.Interface
 	Informer              informers.SnapshotGroupInformer
 	InformerFactory       externalversions.SharedInformerFactory
 	SnapshotClient        dynamic.NamespaceableResourceInterface
@@ -91,7 +90,6 @@ func createClient() *Client {
 	}
 	return &Client{
 		K8s:                   k8s,
-		ClientSet:             clientSet,
 		Informer:              informer,
 		InformerFactory:       informerFactory,
 		SnapshotClient:        snapshotClient,
