@@ -18,8 +18,10 @@ import (
 )
 
 const (
+	// VolumeSnapshotGroupName is the group name for the VolumeSnapshot CRD
 	VolumeSnapshotGroupName = "snapshot.storage.k8s.io"
-	VolumeSnapshotKind      = "VolumeSnapshot"
+	// VolumeSnapshotKind is the kind for VolumeSnapshots
+	VolumeSnapshotKind = "VolumeSnapshot"
 )
 
 // Client provides access to k8s resources
