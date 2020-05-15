@@ -6,6 +6,7 @@ require (
 	github.com/container-storage-interface/spec v1.1.0
 	github.com/kubernetes-csi/external-snapshotter v1.2.1-0.20200106204216-fd8d8a33ddb5
 	github.com/stretchr/testify v1.4.0
+	gopkg.in/yaml.v2 v2.2.7
 	k8s.io/api v0.18.0
 	k8s.io/apiextensions-apiserver v0.17.2
 	k8s.io/apimachinery v0.18.0
