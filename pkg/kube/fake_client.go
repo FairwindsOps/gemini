@@ -31,11 +31,14 @@ func createFakeClient() *Client {
 	informer := informerFactory.Snapshotgroup().V1().SnapshotGroups()
 
 	dynamic := dynamicFake.NewSimpleDynamicClient(k8sruntime.NewScheme())
-	snapshotClient := dynamic.Resource(schema.GroupVersionResource{VolumeSnapshotGroupName, "v1beta1", VolumeSnapshotKind})
+	snapshotClient := dynamic.Resource(schema.GroupVersionResource{
+		Group:    VolumeSnapshotGroupName,
+		Version:  "v1beta1",
+		Resource: VolumeSnapshotKind,
+	})
 
 	return &Client{
 		K8s:             k8s,
-		ClientSet:       snapshotGroupClientSet,
 		Informer:        informer,
 		InformerFactory: informerFactory,
 		SnapshotClient:  snapshotClient,
