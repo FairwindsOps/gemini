@@ -2,7 +2,6 @@ package snapshots
 
 import (
 	"encoding/json"
-	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -40,7 +39,6 @@ func ListSnapshots(sg *v1.SnapshotGroup) ([]PhotonSnapshot, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("got meta", snapshotMeta)
 		if managedBy, ok := snapshotMeta.GetAnnotations()[managedByAnnotation]; !ok || managedBy != managerName {
 			continue
 		}
