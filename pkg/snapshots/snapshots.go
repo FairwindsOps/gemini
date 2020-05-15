@@ -104,6 +104,18 @@ func createSnapshot(sg *v1.SnapshotGroup, annotations map[string]string) error {
 	client := kube.GetClient()
 	unst.Object["kind"] = "VolumeSnapshot"
 	unst.Object["apiVersion"] = client.VolumeSnapshotVersion
+
+	if strings.HasSuffix(client.VolumeSnapshotVersion, "v1alpha1") {
+		// There is a slight change in `source` from alpha to beta
+		spec := unst.Object["spec"].(map[string]interface{})
+		source := spec["source"].(map[string]interface{})
+		delete(source, "persistentVolumeClaimName")
+		source["name"] = sg.ObjectMeta.Name
+		source["kind"] = "PersistentVolumeClaim"
+		spec["source"] = source
+		unst.Object["spec"] = spec
+	}
+
 	snapClient := client.SnapshotClient.Namespace(snapshot.ObjectMeta.Namespace)
 	_, err = snapClient.Create(&unst, metav1.CreateOptions{})
 	return err
