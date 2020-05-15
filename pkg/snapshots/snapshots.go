@@ -2,6 +2,7 @@ package snapshots
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -19,10 +20,11 @@ import (
 
 // PhotonSnapshot represents a VolumeSnapshot created by Photon
 type PhotonSnapshot struct {
-	Intervals    []string
-	SnapshotMeta metav1.Object
-	Timestamp    time.Time
-	Restore      string
+	Namespace string
+	Name      string
+	Intervals []string
+	Timestamp time.Time
+	Restore   string
 }
 
 // ListSnapshots returns all snapshots associated with a particular SnapshotGroup
@@ -35,6 +37,10 @@ func ListSnapshots(sg *v1.SnapshotGroup) ([]PhotonSnapshot, error) {
 	PhotonSnapshots := []PhotonSnapshot{}
 	for _, snapshot := range snapshots.Items {
 		snapshotMeta, err := meta.Accessor(&snapshot)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println("got meta", snapshotMeta)
 		if managedBy, ok := snapshotMeta.GetAnnotations()[managedByAnnotation]; !ok || managedBy != managerName {
 			continue
 		}
@@ -53,10 +59,11 @@ func ListSnapshots(sg *v1.SnapshotGroup) ([]PhotonSnapshot, error) {
 			intervals = strings.Split(intervalsStr, intervalsSeparator)
 		}
 		PhotonSnapshots = append(PhotonSnapshots, PhotonSnapshot{
-			SnapshotMeta: snapshotMeta,
-			Timestamp:    time.Unix(int64(timestamp), 0),
-			Intervals:    intervals,
-			Restore:      snapshotMeta.GetAnnotations()[RestoreAnnotation],
+			Namespace: snapshotMeta.GetNamespace(),
+			Name:      snapshotMeta.GetName(),
+			Timestamp: time.Unix(int64(timestamp), 0),
+			Intervals: intervals,
+			Restore:   snapshotMeta.GetAnnotations()[RestoreAnnotation],
 		})
 	}
 	klog.Infof("Found %d snapshots for SnapshotGroup %s", len(PhotonSnapshots), sg.ObjectMeta.Name)
@@ -138,13 +145,12 @@ func deleteSnapshots(toDelete []PhotonSnapshot) error {
 	klog.Infof("Deleting %d expired snapshots", len(toDelete))
 	client := kube.GetClient()
 	for _, snapshot := range toDelete {
-		details := snapshot.SnapshotMeta
-		snapClient := client.SnapshotClient.Namespace(details.GetNamespace())
-		err := snapClient.Delete(details.GetName(), &metav1.DeleteOptions{})
+		snapClient := client.SnapshotClient.Namespace(snapshot.Namespace)
+		err := snapClient.Delete(snapshot.Name, &metav1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
-		klog.Infof("Deleted snapshot %s", details.GetName())
+		klog.Infof("Deleted snapshot %s/%s", snapshot.Namespace, snapshot.Name)
 	}
 	return nil
 }
