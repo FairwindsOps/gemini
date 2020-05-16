@@ -1,4 +1,6 @@
 version: 2.1
+orbs:
+  rok8s-scripts: fairwinds/rok8s-scripts@10.1
 
 executors:
   vm:
@@ -76,6 +78,21 @@ workflows:
           filters:
             tags:
               only: /^testing-.*/
+  e2e_test:
+    jobs:
+      - rok8s-scripts/kubernetes_e2e_tests:
+          name: End-To-End Test on Kubernetes 1.16
+          pre_script: e2e/pre.sh
+          script: e2e/test.sh
+          kind_node_image: >-
+            kindest/node:v1.15.6@sha256:18c4ab6b61c991c249d29df778e651f443ac4bcd4e6bdd37e0c83c0d33eaae78
+      - rok8s-scripts/kubernetes_e2e_tests:
+          name: End-To-End Test on Kubernetes 1.17
+          pre_script: e2e/pre.sh
+          script: e2e/test.sh
+          kind_node_image: >-
+            kindest/node:v1.17.5@sha256:ab3f9e6ec5ad8840eeb1f76c89bb7948c77bbf76bcebe1a8b59790b8ae9a283a
+
   release:
     jobs:
       - build:
