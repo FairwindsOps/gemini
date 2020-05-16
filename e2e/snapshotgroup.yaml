@@ -1,0 +1,16 @@
+apiVersion: photon.fairwinds.com/v1
+kind: SnapshotGroup
+metadata:
+  name: my-files
+  namespace: notepad
+spec:
+  claim:
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+  schedule:
+    - every: hour
+      keep: 1
