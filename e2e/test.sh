@@ -3,6 +3,8 @@ set -eo pipefail
 
 ls -lah /project
 
+helm install /project/deploy/charts/photon --namespace photon
+
 kubectl apply -f /project/e2e/snapshotgroup.yaml
 kubectl get pvc
 kubectl apply -f /project/e2e/pod.yaml
