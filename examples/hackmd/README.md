@@ -85,7 +85,7 @@ hackmd-postgresql-1585945609   15s
 ```
 
 ```
-kubectl annotate snapshotgroup/hackmd-postgresql --overwrite \
+kubectl annotate snapshotgroup/hackmd-postgresql -n notepad --overwrite \
   "photon.fairwinds.com/restore=1585945609"
 ```
 
