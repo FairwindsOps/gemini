@@ -61,10 +61,10 @@ func restorePVC(sg *v1.SnapshotGroup) error {
 		RestoreAnnotation: restorePoint,
 	}
 	spec := sg.Spec.Claim.Spec
-	apiGroup := "snapshot.storage.k8s.io"
+	apiGroup := kube.VolumeSnapshotGroupName
 	spec.DataSource = &corev1.TypedLocalObjectReference{
 		APIGroup: &apiGroup,
-		Kind:     "VolumeSnapshot",
+		Kind:     kube.VolumeSnapshotKind,
 		Name:     sg.ObjectMeta.Name + "-" + restorePoint,
 	}
 	return createPVC(sg, spec, annotations)

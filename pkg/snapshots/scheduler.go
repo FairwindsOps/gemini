@@ -42,7 +42,7 @@ func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []PhotonSnaps
 		needsCreation[schedule.Every] = true
 	}
 	for _, snapshot := range snapshots {
-		klog.V(9).Infof("Checking snapshot %s", snapshot.Snapshot.ObjectMeta.Name)
+		klog.V(9).Infof("Checking snapshot %s/%s", snapshot.Namespace, snapshot.Name)
 		keep := false
 		for _, interval := range snapshot.Intervals {
 			if numSnapshotsByInterval[interval] == 0 {
