@@ -1,6 +1,7 @@
 package v1
 
 import (
+	snapshotsv1 "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -20,11 +21,16 @@ type SnapshotGroup struct {
 
 type SnapshotGroupSpec struct {
 	Claim    SnapshotClaim      `json:"claim"`
+	Template SnapshotTemplate   `json:"template"`
 	Schedule []SnapshotSchedule `json:"schedule"`
 }
 
 type SnapshotClaim struct {
 	Spec corev1.PersistentVolumeClaimSpec `json:"spec"`
+}
+
+type SnapshotTemplate struct {
+	Spec snapshotsv1.VolumeSnapshotSpec `json:"spec"`
 }
 
 type SnapshotSchedule struct {
