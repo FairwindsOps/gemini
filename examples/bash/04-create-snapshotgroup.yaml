@@ -4,8 +4,12 @@ metadata:
   name: ebs-photon-testing
   namespace: ebs-photon-testing
 spec:
+  template:
+    spec:
+      volumeSnapshotClassName: aws-ebs-snapclass
   claim:
     spec:
+      storageClassName: ebs-sc
       accessModes:
         - ReadWriteOnce
       resources:

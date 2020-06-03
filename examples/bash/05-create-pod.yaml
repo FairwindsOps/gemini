@@ -15,6 +15,6 @@ spec:
   volumes:
   - name: persistent-storage
     persistentVolumeClaim:
-      claimName: ebs-claim
+      claimName: ebs-photon-testing
 ## after pod is provisioned, you can see it writing to EBS volume
 ## kubectl exec -it -n ebs-photon-testing app cat /data/out.txt
