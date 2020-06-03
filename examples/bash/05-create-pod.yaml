@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: app
-  namespace: ebs-photon-testing
+  namespace: ebs-gemini-testing
 spec:
   containers:
   - name: app
@@ -15,6 +15,6 @@ spec:
   volumes:
   - name: persistent-storage
     persistentVolumeClaim:
-      claimName: ebs-photon-testing
+      claimName: ebs-gemini-testing
 ## after pod is provisioned, you can see it writing to EBS volume
-## kubectl exec -it -n ebs-photon-testing app cat /data/out.txt
+## kubectl exec -it -n ebs-gemini-testing app cat /data/out.txt
