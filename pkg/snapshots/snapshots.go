@@ -85,12 +85,10 @@ func createSnapshot(sg *v1.SnapshotGroup, annotations map[string]string) error {
 			Name:        sg.ObjectMeta.Name + "-" + timestamp,
 			Annotations: annotations,
 		},
-		Spec: snapshotsv1.VolumeSnapshotSpec{
-			Source: snapshotsv1.VolumeSnapshotSource{
-				PersistentVolumeClaimName: &sg.ObjectMeta.Name,
-			},
-		},
+		Spec: sg.Spec.Template.Spec,
 	}
+	snapshot.Spec.Source.PersistentVolumeClaimName = &sg.ObjectMeta.Name
+
 	marshaled, err := json.Marshal(snapshot)
 	if err != nil {
 		return err
