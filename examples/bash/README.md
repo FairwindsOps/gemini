@@ -5,14 +5,14 @@ Before you can work with Gemini and Gemini's SnapshotGroups, you need to ensure 
 
 
 
-### Gemini Installation on clusters that already have CSI configured
+## Gemini Installation on clusters that already have CSI configured
 
 ```
 kubectl create ns gemini
 helm install gemini deploy/charts/gemini --namespace gemini
 ```
 
-### Gemini Installation on Kops 1.17+ clusters that do not have CSI configured
+## Gemini Installation on Kops 1.17+ clusters that do not have CSI configured
 
 Run the provided `course.yaml` file with [Reckoner](https://github.com/fairwindsops/reckoner) to install all the prerequisites for Gemini (such as the EBS CSI Driver and external-snapshotter), as well as Gemini itself.
 
@@ -25,7 +25,7 @@ NAME                            READYTOUSE   SOURCEPVC            SOURCESNAPSHOT
 ebs-photon-testing-1591205245   true         ebs-photon-testing                           1Gi           aws-ebs-snapclass   snapcontent-96ab9a23-0d60-413d-af0f-b01d3880f3e7   83m            83m
 ```
 
-Accordingly, you'll see the associated EBS snapshots in AWS:
+Accordingly, you'll see the associated snapshots on your cloud provider of choice. For example, with AWS:
 
 ```
 aws ec2 describe-snapshots --owner-ids <account-id>
