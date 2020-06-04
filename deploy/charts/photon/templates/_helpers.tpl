@@ -2,7 +2,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "photon.name" -}}
+{{- define "gemini.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -11,7 +11,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "photon.fullname" -}}
+{{- define "gemini.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -27,18 +27,18 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "photon.chart" -}}
+{{- define "gemini.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Standard labels
 */}}
-{{- define "photon.labels" -}}
-app: {{ include "photon.name" . }}
+{{- define "gemini.labels" -}}
+app: {{ include "gemini.name" . }}
 {{- if not .Values.templateOnly }}
-app.kubernetes.io/name: {{ include "photon.name" . }}
-helm.sh/chart: {{ include "photon.chart" . }}
+app.kubernetes.io/name: {{ include "gemini.name" . }}
+helm.sh/chart: {{ include "gemini.chart" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
@@ -47,10 +47,10 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Standard selector
 */}}
-{{- define "photon.selectors" -}}
-app: {{ include "photon.name" . }}
+{{- define "gemini.selectors" -}}
+app: {{ include "gemini.name" . }}
 {{- if not .Values.templateOnly }}
-app.kubernetes.io/name: {{ include "photon.name" . }}
+app.kubernetes.io/name: {{ include "gemini.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end -}}

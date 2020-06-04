@@ -11,10 +11,10 @@ import (
 	"k8s.io/client-go/restmapper"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	snapshotgroupv1 "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
-	snapshotGroupClientset "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned"
-	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions"
-	informers "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions/snapshotgroup/v1"
+	snapshotgroupv1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	snapshotGroupClientset "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned"
+	"github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions"
+	informers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions/snapshotgroup/v1"
 )
 
 const (

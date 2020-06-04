@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
+	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
 )
 
 func TestBasicSchedule(t *testing.T) {
@@ -16,24 +15,24 @@ func TestBasicSchedule(t *testing.T) {
 	}
 	start := time.Now().Add(time.Minute * -5)
 
-	existing := []PhotonSnapshot{
-		PhotonSnapshot{
+	existing := []GeminiSnapshot{
+		GeminiSnapshot{
 			Intervals: []string{"minute"},
 			Timestamp: start.Add(time.Minute * 4),
 		},
-		PhotonSnapshot{
+		GeminiSnapshot{
 			Intervals: []string{"minute"},
 			Timestamp: start.Add(time.Minute * 3),
 		},
-		PhotonSnapshot{
+		GeminiSnapshot{
 			Intervals: []string{"minute"},
 			Timestamp: start.Add(time.Minute * 2),
 		},
-		PhotonSnapshot{
+		GeminiSnapshot{
 			Intervals: []string{"minute"},
 			Timestamp: start.Add(time.Minute),
 		},
-		PhotonSnapshot{
+		GeminiSnapshot{
 			Intervals: []string{"minute"},
 			Timestamp: start,
 		},

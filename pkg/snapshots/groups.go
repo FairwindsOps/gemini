@@ -2,11 +2,11 @@ package snapshots
 
 import (
 	"fmt"
+
+	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
 	"k8s.io/klog"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
 )
 
 // ReconcileBackupsForSnapshotGroup handles any changes to SnapshotGroups

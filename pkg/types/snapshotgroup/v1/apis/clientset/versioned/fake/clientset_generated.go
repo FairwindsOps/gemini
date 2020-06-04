@@ -19,9 +19,9 @@ limitations under the License.
 package fake
 
 import (
-	clientset "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned"
-	snapshotgroupv1 "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned/typed/snapshotgroup/v1"
-	fakesnapshotgroupv1 "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned/typed/snapshotgroup/v1/fake"
+	clientset "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned"
+	snapshotgroupv1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned/typed/snapshotgroup/v1"
+	fakesnapshotgroupv1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned/typed/snapshotgroup/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

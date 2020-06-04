@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fairwindsops/photon/pkg/kube"
-	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
+	"github.com/fairwindsops/gemini/pkg/kube"
+	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
 
 	snapshotsv1 "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -17,8 +17,8 @@ import (
 	"k8s.io/klog"
 )
 
-// PhotonSnapshot represents a VolumeSnapshot created by Photon
-type PhotonSnapshot struct {
+// GeminiSnapshot represents a VolumeSnapshot created by Gemini
+type GeminiSnapshot struct {
 	Namespace string
 	Name      string
 	Intervals []string
@@ -27,13 +27,13 @@ type PhotonSnapshot struct {
 }
 
 // ListSnapshots returns all snapshots associated with a particular SnapshotGroup
-func ListSnapshots(sg *v1.SnapshotGroup) ([]PhotonSnapshot, error) {
+func ListSnapshots(sg *v1.SnapshotGroup) ([]GeminiSnapshot, error) {
 	client := kube.GetClient()
 	snapshots, err := client.SnapshotClient.Namespace(sg.ObjectMeta.Namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	PhotonSnapshots := []PhotonSnapshot{}
+	GeminiSnapshots := []GeminiSnapshot{}
 	for _, snapshot := range snapshots.Items {
 		snapshotMeta, err := meta.Accessor(&snapshot)
 		if err != nil {
@@ -57,7 +57,7 @@ func ListSnapshots(sg *v1.SnapshotGroup) ([]PhotonSnapshot, error) {
 		if intervalsStr != "" {
 			intervals = strings.Split(intervalsStr, intervalsSeparator)
 		}
-		PhotonSnapshots = append(PhotonSnapshots, PhotonSnapshot{
+		GeminiSnapshots = append(GeminiSnapshots, GeminiSnapshot{
 			Namespace: snapshotMeta.GetNamespace(),
 			Name:      snapshotMeta.GetName(),
 			Timestamp: time.Unix(int64(timestamp), 0),
@@ -65,11 +65,11 @@ func ListSnapshots(sg *v1.SnapshotGroup) ([]PhotonSnapshot, error) {
 			Restore:   annotations[RestoreAnnotation],
 		})
 	}
-	klog.Infof("Found %d snapshots for SnapshotGroup %s", len(PhotonSnapshots), sg.ObjectMeta.Name)
-	sort.Slice(PhotonSnapshots, func(i, j int) bool {
-		return PhotonSnapshots[j].Timestamp.Before(PhotonSnapshots[i].Timestamp)
+	klog.Infof("Found %d snapshots for SnapshotGroup %s", len(GeminiSnapshots), sg.ObjectMeta.Name)
+	sort.Slice(GeminiSnapshots, func(i, j int) bool {
+		return GeminiSnapshots[j].Timestamp.Before(GeminiSnapshots[i].Timestamp)
 	})
-	return PhotonSnapshots, nil
+	return GeminiSnapshots, nil
 }
 
 // createSnapshot creates a new snappshot for a given SnapshotGroup
@@ -150,7 +150,7 @@ func createSnapshotForRestore(sg *v1.SnapshotGroup) error {
 	return createSnapshot(sg, annotations)
 }
 
-func deleteSnapshots(toDelete []PhotonSnapshot) error {
+func deleteSnapshots(toDelete []GeminiSnapshot) error {
 	klog.Infof("Deleting %d expired snapshots", len(toDelete))
 	client := kube.GetClient()
 	for _, snapshot := range toDelete {

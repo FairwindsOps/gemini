@@ -19,8 +19,8 @@ limitations under the License.
 package v1
 
 import (
-	v1 "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
-	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned/scheme"
+	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	"github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

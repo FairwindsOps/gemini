@@ -1,10 +1,10 @@
-# photon
+# gemini
 
 ## Design Doc
 https://paper.dropbox.com/doc/Photon-Design-Doc--AxC2l~E4g1rQkAk5S4haNYtOAg-pWh0uK2eUgNGZSnuK2Lid
 
 ## Example
-To see Photon working end-to-end, check out [the HackMD example](examples/hackmd)
+To see gemini working end-to-end, check out [the HackMD example](examples/hackmd)
 
 ## Quickstart
 > Note: haven't managed to get KIND working with VolumeSnapshots
@@ -21,8 +21,8 @@ CRD generation mostly follows [this example](https://github.com/jinghzhu/Kuberne
 ### Generated files
 ```
 $GOPATH/src/k8s.io/code-generator/generate-groups.sh all \
-  github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis \
-  github.com/fairwindsops/photon/pkg/types \
+  github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis \
+  github.com/fairwindsops/gemini/pkg/types \
   "snapshotgroup:v1"
 ```
 

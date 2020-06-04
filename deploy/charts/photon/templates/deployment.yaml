@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "photon.fullname" . }}-controller
+  name: {{ include "gemini.fullname" . }}-controller
   labels:
-    app: photon
+    app: gemini
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: photon
+      app: gemini
   template:
     metadata:
       labels:
-        app: photon
+        app: gemini
     spec:
-      serviceAccountName: {{ include "photon.fullname" . }}-controller
+      serviceAccountName: {{ include "gemini.fullname" . }}-controller
       containers:
       - command:
-        - photon
+        - gemini
         image: '{{.Values.image.repository}}:{{.Values.image.tag}}'
         imagePullPolicy: '{{.Values.image.pullPolicy}}'
-        name: photon-controller
+        name: gemini-controller
         resources:
           limits:
             cpu: 100m

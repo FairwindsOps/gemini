@@ -1,5 +1,5 @@
 FROM golang:1.13 AS build-env
-WORKDIR /go/src/github.com/fairwindsops/photon/
+WORKDIR /go/src/github.com/fairwindsops/gemini/
 
 ENV GO111MODULE=on
 ENV GOPROXY=https://proxy.golang.org
@@ -12,16 +12,16 @@ COPY go.sum .
 RUN go mod download
 
 COPY . .
-RUN go build -a -o photon *.go
+RUN go build -a -o gemini *.go
 
 FROM alpine:3.10
 WORKDIR /usr/local/bin
 RUN apk --no-cache add ca-certificates
 
-RUN addgroup -S photon && adduser -u 1200 -S photon -G photon
+RUN addgroup -S gemini && adduser -u 1200 -S gemini -G gemini
 USER 1200
-COPY --from=build-env /go/src/github.com/fairwindsops/photon/photon .
+COPY --from=build-env /go/src/github.com/fairwindsops/gemini/gemini .
 
 WORKDIR /opt/app
 
-CMD ["photon"]
+CMD ["gemini"]

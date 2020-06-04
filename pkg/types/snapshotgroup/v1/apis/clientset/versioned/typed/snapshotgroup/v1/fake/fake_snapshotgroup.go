@@ -21,7 +21,7 @@ package fake
 import (
 	"context"
 
-	snapshotgroupv1 "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
+	snapshotgroupv1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
