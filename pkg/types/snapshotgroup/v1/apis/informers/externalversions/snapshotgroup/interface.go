@@ -19,8 +19,8 @@ limitations under the License.
 package snapshotgroup
 
 import (
-	internalinterfaces "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions/internalinterfaces"
-	v1 "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions/snapshotgroup/v1"
+	internalinterfaces "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions/internalinterfaces"
+	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions/snapshotgroup/v1"
 )
 
 // Interface provides access to each of this group's versions.

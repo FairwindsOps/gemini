@@ -1,7 +1,7 @@
-namespace: photon
+namespace: gemini
 charts:
-  photon:
-    chart: photon
+  gemini:
+    chart: gemini
     version: 0.0.1
     repository: ../../deploy/charts/
     hooks:

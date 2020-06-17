@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/fairwindsops/photon/pkg/kube"
-	"github.com/fairwindsops/photon/pkg/snapshots"
-	v1 "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
+	"github.com/fairwindsops/gemini/pkg/kube"
+	"github.com/fairwindsops/gemini/pkg/snapshots"
+	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
 )
 
 var (
@@ -67,7 +67,7 @@ func TestBackupHandler(t *testing.T) {
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
-	assert.Equal(t, "photon", pvc.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
+	assert.Equal(t, "gemini", pvc.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
 
 	time.Sleep(time.Second)
 	err = ctrl.syncHandler(event)
@@ -120,20 +120,20 @@ func TestRestoreHandler(t *testing.T) {
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
-	assert.Equal(t, "photon", pvc.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
-	assert.Equal(t, "", pvc.ObjectMeta.Annotations["photon.fairwinds.com/restore"])
+	assert.Equal(t, "gemini", pvc.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
+	assert.Equal(t, "", pvc.ObjectMeta.Annotations["gemini.fairwinds.com/restore"])
 
 	time.Sleep(time.Second)
 	timestamp := strconv.Itoa(int(snaps[0].Timestamp.Unix()))
-	sg.ObjectMeta.Annotations["photon.fairwinds.com/restore"] = timestamp
+	sg.ObjectMeta.Annotations["gemini.fairwinds.com/restore"] = timestamp
 	event.task = restoreTask
 	err = ctrl.syncHandler(event)
 	assert.NoError(t, err)
 
 	pvc, err = pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
-	assert.Equal(t, "photon", pvc.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
-	assert.Equal(t, timestamp, pvc.ObjectMeta.Annotations["photon.fairwinds.com/restore"])
+	assert.Equal(t, "gemini", pvc.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
+	assert.Equal(t, timestamp, pvc.ObjectMeta.Annotations["gemini.fairwinds.com/restore"])
 
 	snaps, err = snapshots.ListSnapshots(sg)
 	assert.NoError(t, err)

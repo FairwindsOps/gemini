@@ -11,10 +11,10 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
 
-	"github.com/fairwindsops/photon/pkg/kube"
-	"github.com/fairwindsops/photon/pkg/snapshots"
-	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
-	listers "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/listers/snapshotgroup/v1"
+	"github.com/fairwindsops/gemini/pkg/kube"
+	"github.com/fairwindsops/gemini/pkg/snapshots"
+	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	listers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/listers/snapshotgroup/v1"
 )
 
 // Controller represents a SnapshotGroup controller

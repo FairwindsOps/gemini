@@ -8,8 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 
-	"github.com/fairwindsops/photon/pkg/kube"
-	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
+	"github.com/fairwindsops/gemini/pkg/kube"
+	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
 )
 
 func createPVC(sg *v1.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, annotations map[string]string) error {
@@ -48,7 +48,7 @@ func maybeCreatePVC(sg *v1.SnapshotGroup) error {
 	} else {
 		klog.Infof("Found pvc %s/%s", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
 		if pvc.ObjectMeta.Annotations[managedByAnnotation] != managerName {
-			return fmt.Errorf("PVC %s/%s found, but not managed by Photon", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
+			return fmt.Errorf("PVC %s/%s found, but not managed by gemini", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
 		}
 	}
 	return nil

@@ -1,4 +1,4 @@
-apiVersion: photon.fairwinds.com/v1
+apiVersion: gemini.fairwinds.com/v1
 kind: SnapshotGroup
 metadata:
   name: hackmd
@@ -17,7 +17,7 @@ spec:
     - every: hour
       keep: 1
 ---
-apiVersion: photon.fairwinds.com/v1
+apiVersion: gemini.fairwinds.com/v1
 kind: SnapshotGroup
 metadata:
   name: hackmd-postgresql

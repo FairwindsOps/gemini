@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/fairwindsops/photon/pkg/controller"
-	"github.com/fairwindsops/photon/pkg/kube"
+	"github.com/fairwindsops/gemini/pkg/controller"
+	"github.com/fairwindsops/gemini/pkg/kube"
 
 	"k8s.io/klog"
 )

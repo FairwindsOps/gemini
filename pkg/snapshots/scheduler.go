@@ -6,9 +6,8 @@ import (
 	"strings"
 	"time"
 
+	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
 	"k8s.io/klog"
-
-	"github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1"
 )
 
 var durations = map[string]time.Duration{
@@ -22,7 +21,7 @@ var durations = map[string]time.Duration{
 	"year":  time.Hour * 24 * 365,
 }
 
-func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []PhotonSnapshot) ([]string, []PhotonSnapshot, error) {
+func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []GeminiSnapshot) ([]string, []GeminiSnapshot, error) {
 	numToKeepByInterval := map[string]int{}
 	numSnapshotsByInterval := map[string]int{}
 	for _, schedule := range schedules {
@@ -36,7 +35,7 @@ func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []PhotonSnaps
 	}
 	now := time.Now().UTC()
 
-	toDelete := []PhotonSnapshot{}
+	toDelete := []GeminiSnapshot{}
 	needsCreation := map[string]bool{}
 	for _, schedule := range schedules {
 		needsCreation[schedule.Every] = true
@@ -79,7 +78,7 @@ func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []PhotonSnaps
 	return toCreate, toDelete, nil
 }
 
-// ParseInterval parses an interval string as defined by Photon
+// ParseInterval parses an interval string as defined by gemini
 func ParseInterval(str string) (time.Duration, error) {
 	amt := 1
 	every := str

@@ -1,10 +1,10 @@
-# Photon Example: HackMD
+# Gemini Example: HackMD
 > Note: this will not work in a KIND cluster. It has been tested on DigitalOcean.
 
 ### Install the controller
 ```
-kubectl create ns photon
-helm install photon deploy/charts/photon --namespace photon
+kubectl create ns gemini
+helm install gemini deploy/charts/gemini --namespace gemini
 ```
 
 ### Create the `snapshotgroup`
@@ -39,8 +39,8 @@ kubectl port-forward svc/hackmd 3000:3000 -n notepad
 Visit `localhost:3000` and create a new guest document. Enter some dummy text.
 
 ### Trigger a backup
-Rather than waiting for Photon to create the next backup, you can delete existing
-backups, and Photon will create a new one.
+Rather than waiting for Gemini to create the next backup, you can delete existing
+backups, and Gemini will create a new one.
 
 ```
 kubectl delete volumesnapshot --all -n notepad
@@ -86,7 +86,7 @@ hackmd-postgresql-1585945609   15s
 
 ```
 kubectl annotate snapshotgroup/hackmd-postgresql -n notepad --overwrite \
-  "photon.fairwinds.com/restore=1585945609"
+  "gemini.fairwinds.com/restore=1585945609"
 ```
 
 This will:
