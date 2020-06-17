@@ -23,9 +23,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned"
-	internalinterfaces "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions/internalinterfaces"
-	snapshotgroup "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions/snapshotgroup"
+	versioned "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned"
+	internalinterfaces "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions/internalinterfaces"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions/snapshotgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

@@ -56,7 +56,7 @@ jobs:
       - *docker_build_and_push
 
   test:
-    working_directory: /go/src/github.com/fairwindsops/photon/
+    working_directory: /go/src/github.com/fairwindsops/gemini/
     docker:
       - image: circleci/golang:1.13
     steps:

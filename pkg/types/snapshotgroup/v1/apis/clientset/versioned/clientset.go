@@ -21,7 +21,7 @@ package versioned
 import (
 	"fmt"
 
-	snapshotgroupv1 "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned/typed/snapshotgroup/v1"
+	snapshotgroupv1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned/typed/snapshotgroup/v1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

@@ -1,19 +1,19 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "photon.fullname" . }}-controller
+  name: {{ include "gemini.fullname" . }}-controller
   labels:
-    {{- include "photon.labels" . | nindent 4 }}
+    {{- include "gemini.labels" . | nindent 4 }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
-  name: {{ include "photon.fullname" . }}-controller
+  name: {{ include "gemini.fullname" . }}-controller
   labels:
-    {{- include "photon.labels" . | nindent 4 }}
+    {{- include "gemini.labels" . | nindent 4 }}
 rules:
   - apiGroups:
-      - photon.fairwinds.com
+      - gemini.fairwinds.com
     resources:
       - snapshotgroups
     verbs:
@@ -45,14 +45,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "photon.fullname" . }}-controller
+  name: {{ include "gemini.fullname" . }}-controller
   labels:
-    {{- include "photon.labels" . | nindent 4 }}
+    {{- include "gemini.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "photon.fullname" . }}-controller
+  name: {{ include "gemini.fullname" . }}-controller
 subjects:
   - kind: ServiceAccount
-    name: {{ include "photon.fullname" . }}-controller
+    name: {{ include "gemini.fullname" . }}-controller
     namespace: {{ .Release.Namespace }}

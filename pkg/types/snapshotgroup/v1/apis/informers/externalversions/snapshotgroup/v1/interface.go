@@ -19,7 +19,7 @@ limitations under the License.
 package v1
 
 import (
-	internalinterfaces "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

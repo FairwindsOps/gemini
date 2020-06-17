@@ -9,8 +9,8 @@ import (
 	dynamicFake "k8s.io/client-go/dynamic/fake"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 
-	snapshotGroupsFake "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/clientset/versioned/fake"
-	snapshotGroupExternalVersions "github.com/fairwindsops/photon/pkg/types/snapshotgroup/v1/apis/informers/externalversions"
+	snapshotGroupsFake "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned/fake"
+	snapshotGroupExternalVersions "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions"
 )
 
 var noResync = func() time.Duration { return 0 }

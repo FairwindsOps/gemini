@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	GroupName    string = "photon.fairwinds.com"
+	GroupName    string = "gemini.fairwinds.com"
 	Kind         string = "SnapshotGroup"
 	GroupVersion string = "v1"
 	Plural       string = "snapshotgroups"

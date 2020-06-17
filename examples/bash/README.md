@@ -18,11 +18,11 @@ Run the provided `course.yaml` file with [Reckoner](https://github.com/fairwinds
 
 ## Deploy the demo resources
 
-Apply the provided Kubernetes manifests in the number in which they're ordered: `01-create-namespace.yaml`, `02-create-storage-class.yaml`, and so on. You'll be creating the temporary demo namespace, the StorageClass to be utilized by the volume, the VolumeSnapshotClass to be utilized by the VolumeSnapshots, the Gemini SnapshotGroup, and a test pod that will mount the example Volume. Soon after applying, you'll be able to see that Photon is successfully generating VolumeSnapshots for you!
+Apply the provided Kubernetes manifests in the number in which they're ordered: `01-create-namespace.yaml`, `02-create-storage-class.yaml`, and so on. You'll be creating the temporary demo namespace, the StorageClass to be utilized by the volume, the VolumeSnapshotClass to be utilized by the VolumeSnapshots, the Gemini SnapshotGroup, and a test pod that will mount the example Volume. Soon after applying, you'll be able to see that gemini is successfully generating VolumeSnapshots for you!
 
 ```kubectl get volumesnapshot
 NAME                            READYTOUSE   SOURCEPVC            SOURCESNAPSHOTCONTENT   RESTORESIZE   SNAPSHOTCLASS       SNAPSHOTCONTENT                                    CREATIONTIME   AGE
-ebs-photon-testing-1591205245   true         ebs-photon-testing                           1Gi           aws-ebs-snapclass   snapcontent-96ab9a23-0d60-413d-af0f-b01d3880f3e7   83m            83m
+ebs-gemini-testing-1591205245   true         ebs-gemini-testing                           1Gi           aws-ebs-snapclass   snapcontent-96ab9a23-0d60-413d-af0f-b01d3880f3e7   83m            83m
 ```
 
 Accordingly, you'll see the associated snapshots on your cloud provider of choice. For example, with AWS:

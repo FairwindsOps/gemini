@@ -1,19 +1,17 @@
-module github.com/fairwindsops/photon
+module github.com/fairwindsops/gemini
 
 go 1.13
 
 require (
-	github.com/container-storage-interface/spec v1.1.0
+	github.com/kr/pretty v0.0.0-20140812000539-f31442d60e51 // indirect
+	github.com/kr/text v0.0.0-20130911015532-6807e777504f // indirect
 	github.com/kubernetes-csi/external-snapshotter v1.2.1-0.20200106204216-fd8d8a33ddb5
 	github.com/stretchr/testify v1.4.0
-	gopkg.in/yaml.v2 v2.2.7
 	k8s.io/api v0.18.0
 	k8s.io/apiextensions-apiserver v0.17.2
 	k8s.io/apimachinery v0.18.0
 	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/klog v1.0.0
-	k8s.io/kubernetes v1.15.0
-	k8s.io/sample-controller v0.18.0
 	sigs.k8s.io/controller-runtime v0.5.2
 )
 
