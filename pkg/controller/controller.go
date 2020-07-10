@@ -112,10 +112,10 @@ func (c *Controller) processNextWorkItem() bool {
 		}
 		if err := c.syncHandler(item); err != nil {
 			c.workqueue.AddRateLimited(item)
-			return fmt.Errorf("error syncing %#v: %s, requeuing", item, err.Error())
+			return fmt.Errorf("%s/%s: error syncing %#v: %s, requeuing", item.namespace, item.name, item, err.Error())
 		}
 		c.workqueue.Forget(obj)
-		klog.Infof("Successfully performed %s for SnapshotGroup %s/%s", taskLabels[item.task], item.namespace, item.name)
+		klog.Infof("%s/%s: successfully performed %s", item.namespace, item.name, taskLabels[item.task])
 		return nil
 	}(obj)
 
@@ -138,7 +138,7 @@ func (c *Controller) syncHandler(w workItem) error {
 	}
 
 	if err != nil {
-		klog.Errorf("Failed to perform %s for SnapshotGroup %s/%s: %v", taskLabels[w.task], w.namespace, w.name, err)
+		klog.Errorf("%s/%s: failed to perform %s - %v", w.namespace, w.name, taskLabels[w.task], err)
 		return err
 	}
 

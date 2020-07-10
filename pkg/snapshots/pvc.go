@@ -13,7 +13,7 @@ import (
 )
 
 func createPVC(sg *v1.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, annotations map[string]string) error {
-	klog.Infof("Creating PVC for SnapshotGroup %s/%s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	klog.Infof("%s/%s: creating PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
@@ -40,22 +40,22 @@ func maybeCreatePVC(sg *v1.SnapshotGroup) error {
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		klog.Infof("PVC %s/%s not found, creating it", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+		klog.Infof("%s/%s: PVC not found, creating it", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 		err := createPVC(sg, sg.Spec.Claim.Spec, nil)
 		if err != nil {
 			return err
 		}
 	} else {
-		klog.Infof("Found pvc %s/%s", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
+		klog.Infof("%s/%s: PVC found", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
 		if pvc.ObjectMeta.Annotations[managedByAnnotation] != managerName {
-			return fmt.Errorf("PVC %s/%s found, but not managed by gemini", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
+			return fmt.Errorf("%s/%s: PVC found, but not managed by Gemini", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
 		}
 	}
 	return nil
 }
 
 func restorePVC(sg *v1.SnapshotGroup) error {
-	klog.Infof("Restoring PVC for SnapshotGroup %s/%s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	klog.Infof("%s/%s: restoring PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	restorePoint := sg.ObjectMeta.Annotations[RestoreAnnotation]
 	annotations := map[string]string{
 		RestoreAnnotation: restorePoint,
@@ -71,7 +71,7 @@ func restorePVC(sg *v1.SnapshotGroup) error {
 }
 
 func deletePVC(sg *v1.SnapshotGroup) error {
-	klog.Infof("Deleting PVC for SnapshotGroup %s/%s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	klog.Infof("%s/%s: deleting PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	return pvcClient.Delete(sg.ObjectMeta.Name, &metav1.DeleteOptions{})

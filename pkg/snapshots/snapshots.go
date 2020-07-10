@@ -49,7 +49,7 @@ func ListSnapshots(sg *v1.SnapshotGroup) ([]GeminiSnapshot, error) {
 		timestampStr := annotations[TimestampAnnotation]
 		timestamp, err := strconv.Atoi(timestampStr)
 		if err != nil {
-			klog.Errorf("Failed to parse unix timestamp %s for %s", timestampStr, snapshotMeta.GetName())
+			klog.Errorf("%s/%s: failed to parse unix timestamp %s for %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, timestampStr, snapshotMeta.GetName())
 			continue
 		}
 		intervals := []string{}
@@ -65,7 +65,6 @@ func ListSnapshots(sg *v1.SnapshotGroup) ([]GeminiSnapshot, error) {
 			Restore:   annotations[RestoreAnnotation],
 		})
 	}
-	klog.Infof("Found %d snapshots for SnapshotGroup %s", len(GeminiSnapshots), sg.ObjectMeta.Name)
 	sort.Slice(GeminiSnapshots, func(i, j int) bool {
 		return GeminiSnapshots[j].Timestamp.Before(GeminiSnapshots[i].Timestamp)
 	})
@@ -124,7 +123,7 @@ func createSnapshotForIntervals(sg *v1.SnapshotGroup, intervals []string) error 
 	if len(intervals) == 0 {
 		return nil
 	}
-	klog.Infof("Creating snapshot for intervals %v", intervals)
+	klog.V(9).Infof("%s/%s: creating snapshot for intervals %v", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, intervals)
 	annotations := map[string]string{
 		IntervalsAnnotation: strings.Join(intervals, intervalsSeparator),
 	}
@@ -139,11 +138,11 @@ func createSnapshotForRestore(sg *v1.SnapshotGroup) error {
 	}
 	for _, snapshot := range existing {
 		if snapshot.Restore == restore {
-			klog.Infof("Snapshot already exists for timestamp %s", restore)
+			klog.V(9).Infof("%s/%s: snapshot already exists for timestamp %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restore)
 			return nil
 		}
 	}
-	klog.Infof("Creating snapshot for restore %s", restore)
+	klog.V(9).Infof("%s/%s: creating snapshot for restore %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restore)
 	annotations := map[string]string{
 		RestoreAnnotation: restore,
 	}
@@ -151,7 +150,7 @@ func createSnapshotForRestore(sg *v1.SnapshotGroup) error {
 }
 
 func deleteSnapshots(toDelete []GeminiSnapshot) error {
-	klog.Infof("Deleting %d expired snapshots", len(toDelete))
+	klog.V(9).Infof("Deleting %d expired snapshots", len(toDelete))
 	client := kube.GetClient()
 	for _, snapshot := range toDelete {
 		snapClient := client.SnapshotClient.Namespace(snapshot.Namespace)
@@ -159,7 +158,7 @@ func deleteSnapshots(toDelete []GeminiSnapshot) error {
 		if err != nil {
 			return err
 		}
-		klog.Infof("Deleted snapshot %s/%s", snapshot.Namespace, snapshot.Name)
+		klog.V(9).Infof("Deleted snapshot %s/%s", snapshot.Namespace, snapshot.Name)
 	}
 	return nil
 }

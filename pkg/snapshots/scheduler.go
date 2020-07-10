@@ -70,8 +70,9 @@ func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []GeminiSnaps
 
 	toCreate := []string{}
 	for k, v := range needsCreation {
-		klog.V(9).Infof("Need creation for interval %s: %t", k, v)
+		klog.Infof("need creation %v %v", k, v)
 		if v {
+			klog.V(9).Infof("Need creation for interval %s: %t", k, v)
 			toCreate = append(toCreate, k)
 		}
 	}
@@ -96,5 +97,6 @@ func ParseInterval(str string) (time.Duration, error) {
 	if !ok {
 		return time.Hour, fmt.Errorf("Could not find duration for interval %s", str)
 	}
-	return time.Duration(amt) * duration, nil
+	ret := time.Duration(amt) * duration
+	return ret, nil
 }
