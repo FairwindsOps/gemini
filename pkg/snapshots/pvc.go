@@ -31,9 +31,6 @@ func maybeCreatePVC(sg *snapshotgroup.SnapshotGroup) error {
 	pvc, err := getPVC(sg)
 	if err == nil {
 		klog.Infof("%s/%s: PVC found", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
-		if pvc.ObjectMeta.Annotations[managedByAnnotation] != managerName {
-			return fmt.Errorf("%s/%s: PVC found, but not managed by Gemini", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
-		}
 		return nil
 	}
 	if !errors.IsNotFound(err) {
