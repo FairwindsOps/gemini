@@ -11,10 +11,10 @@ import (
 	"k8s.io/client-go/restmapper"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	snapshotgroupv1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
-	snapshotGroupClientset "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned"
-	"github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions"
-	informers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions/snapshotgroup/v1"
+	snapshotgroupv1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
+	snapshotGroupClientset "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/clientset/versioned"
+	"github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/informers/externalversions"
+	informers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/informers/externalversions/snapshotgroup/v1beta1"
 )
 
 const (
@@ -62,7 +62,7 @@ func createClient() *Client {
 	}
 
 	informerFactory := externalversions.NewSharedInformerFactory(clientSet, time.Second*30)
-	informer := informerFactory.Snapshotgroup().V1().SnapshotGroups()
+	informer := informerFactory.Snapshotgroup().V1beta1().SnapshotGroups()
 
 	resources, err := restmapper.GetAPIGroupResources(k8s.Discovery())
 	if err != nil {

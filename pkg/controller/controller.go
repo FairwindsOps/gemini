@@ -13,8 +13,8 @@ import (
 
 	"github.com/fairwindsops/gemini/pkg/kube"
 	"github.com/fairwindsops/gemini/pkg/snapshots"
-	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
-	listers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/listers/snapshotgroup/v1"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
+	listers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/listers/snapshotgroup/v1beta1"
 )
 
 // Controller represents a SnapshotGroup controller
@@ -40,7 +40,7 @@ var taskLabels = []string{"backup", "restore", "delete"}
 type workItem struct {
 	name          string
 	namespace     string
-	snapshotGroup *v1.SnapshotGroup
+	snapshotGroup *snapshotgroup.SnapshotGroup
 	task          task
 }
 
@@ -82,7 +82,7 @@ func (c *Controller) enqueue(sg interface{}, todo task) {
 		name:          name,
 		namespace:     namespace,
 		task:          todo,
-		snapshotGroup: sg.(*v1.SnapshotGroup),
+		snapshotGroup: sg.(*snapshotgroup.SnapshotGroup),
 	}
 	c.workqueue.Add(w)
 }

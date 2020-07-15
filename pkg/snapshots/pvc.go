@@ -9,10 +9,10 @@ import (
 	"k8s.io/klog"
 
 	"github.com/fairwindsops/gemini/pkg/kube"
-	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 )
 
-func createPVC(sg *v1.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, annotations map[string]string) error {
+func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, annotations map[string]string) error {
 	klog.Infof("%s/%s: creating PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	if annotations == nil {
 		annotations = map[string]string{}
@@ -32,7 +32,7 @@ func createPVC(sg *v1.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, anno
 	return err
 }
 
-func maybeCreatePVC(sg *v1.SnapshotGroup) error {
+func maybeCreatePVC(sg *snapshotgroup.SnapshotGroup) error {
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
@@ -54,7 +54,7 @@ func maybeCreatePVC(sg *v1.SnapshotGroup) error {
 	return nil
 }
 
-func restorePVC(sg *v1.SnapshotGroup) error {
+func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
 	klog.Infof("%s/%s: restoring PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	restorePoint := sg.ObjectMeta.Annotations[RestoreAnnotation]
 	annotations := map[string]string{
@@ -70,7 +70,7 @@ func restorePVC(sg *v1.SnapshotGroup) error {
 	return createPVC(sg, spec, annotations)
 }
 
-func deletePVC(sg *v1.SnapshotGroup) error {
+func deletePVC(sg *snapshotgroup.SnapshotGroup) error {
 	klog.Infof("%s/%s: deleting PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
