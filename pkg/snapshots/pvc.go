@@ -12,6 +12,40 @@ import (
 	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 )
 
+func getPVCName(sg *snapshotgroup.SnapshotGroup) string {
+	name := sg.Spec.Claim.Name
+	if name == "" {
+		name = sg.ObjectMeta.Name
+	}
+	return name
+}
+
+func getPVC(sg *snapshotgroup.SnapshotGroup) (*corev1.PersistentVolumeClaim, error) {
+	client := kube.GetClient()
+	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
+	pvc, err := pvcClient.Get(getPVCName(sg), metav1.GetOptions{})
+	return pvc, err
+}
+
+func maybeCreatePVC(sg *snapshotgroup.SnapshotGroup) error {
+	pvc, err := getPVC(sg)
+	if err == nil {
+		klog.Infof("%s/%s: PVC found", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
+		if pvc.ObjectMeta.Annotations[managedByAnnotation] != managerName {
+			return fmt.Errorf("%s/%s: PVC found, but not managed by Gemini", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
+		}
+		return nil
+	}
+	if !errors.IsNotFound(err) {
+		return err
+	}
+	if sg.Spec.Claim.Name != "" {
+		return fmt.Errorf("%s/%s: could not find existing PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, sg.Spec.Claim.Name)
+	}
+	klog.Infof("%s/%s: PVC not found, creating it", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	return createPVC(sg, sg.Spec.Claim.Spec, nil)
+}
+
 func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, annotations map[string]string) error {
 	klog.Infof("%s/%s: creating PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	if annotations == nil {
@@ -20,7 +54,7 @@ func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClai
 	annotations[managedByAnnotation] = managerName
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        sg.ObjectMeta.Name,
+			Name:        getPVCName(sg),
 			Namespace:   sg.ObjectMeta.Namespace,
 			Annotations: annotations,
 		},
@@ -30,28 +64,6 @@ func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClai
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	_, err := pvcClient.Create(pvc)
 	return err
-}
-
-func maybeCreatePVC(sg *snapshotgroup.SnapshotGroup) error {
-	client := kube.GetClient()
-	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
-	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
-	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
-		}
-		klog.Infof("%s/%s: PVC not found, creating it", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
-		err := createPVC(sg, sg.Spec.Claim.Spec, nil)
-		if err != nil {
-			return err
-		}
-	} else {
-		klog.Infof("%s/%s: PVC found", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
-		if pvc.ObjectMeta.Annotations[managedByAnnotation] != managerName {
-			return fmt.Errorf("%s/%s: PVC found, but not managed by Gemini", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
-		}
-	}
-	return nil
 }
 
 func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
@@ -71,8 +83,9 @@ func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
 }
 
 func deletePVC(sg *snapshotgroup.SnapshotGroup) error {
-	klog.Infof("%s/%s: deleting PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	name := getPVCName(sg)
+	klog.Infof("%s/%s: deleting PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
-	return pvcClient.Delete(sg.ObjectMeta.Name, &metav1.DeleteOptions{})
+	return pvcClient.Delete(name, &metav1.DeleteOptions{})
 }
