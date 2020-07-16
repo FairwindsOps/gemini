@@ -27,31 +27,32 @@ func getPVC(sg *snapshotgroup.SnapshotGroup) (*corev1.PersistentVolumeClaim, err
 	return pvc, err
 }
 
-func maybeCreatePVC(sg *snapshotgroup.SnapshotGroup) error {
+func maybeCreatePVC(sg *snapshotgroup.SnapshotGroup) (*corev1.PersistentVolumeClaim, error) {
 	pvc, err := getPVC(sg)
 	if err == nil {
 		klog.Infof("%s/%s: PVC found", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
-		return nil
+		return pvc, nil
 	}
 	if !errors.IsNotFound(err) {
-		return err
+		return nil, err
 	}
 	if sg.Spec.Claim.Name != "" {
-		return fmt.Errorf("%s/%s: could not find existing PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, sg.Spec.Claim.Name)
+		return nil, fmt.Errorf("%s/%s: could not find existing PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, sg.Spec.Claim.Name)
 	}
 	klog.Infof("%s/%s: PVC not found, creating it", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	return createPVC(sg, sg.Spec.Claim.Spec, nil)
 }
 
-func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, annotations map[string]string) error {
-	klog.Infof("%s/%s: creating PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, annotations map[string]string) (*corev1.PersistentVolumeClaim, error) {
+	name := getPVCName(sg)
+	klog.Infof("%s/%s: creating PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
 	annotations[managedByAnnotation] = managerName
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        getPVCName(sg),
+			Name:        name,
 			Namespace:   sg.ObjectMeta.Namespace,
 			Annotations: annotations,
 		},
@@ -59,18 +60,12 @@ func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClai
 	}
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
-	_, err := pvcClient.Create(pvc)
-	return err
+	return pvcClient.Create(pvc)
 }
 
 func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
 	klog.Infof("%s/%s: restoring PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
-	existing, err := getPVC(sg)
-	if err != nil && !errors.IsNotFound(err) {
-		return err
-	}
-
-	err = deletePVC(sg)
+	err := deletePVC(sg)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -80,16 +75,14 @@ func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
 		RestoreAnnotation: restorePoint,
 	}
 	spec := sg.Spec.Claim.Spec
-	if existing != nil {
-		spec = existing.Spec
-	}
 	apiGroup := kube.VolumeSnapshotGroupName
 	spec.DataSource = &corev1.TypedLocalObjectReference{
 		APIGroup: &apiGroup,
 		Kind:     kube.VolumeSnapshotKind,
 		Name:     sg.ObjectMeta.Name + "-" + restorePoint,
 	}
-	return createPVC(sg, spec, annotations)
+	_, err = createPVC(sg, spec, annotations)
+	return err
 }
 
 func deletePVC(sg *snapshotgroup.SnapshotGroup) error {

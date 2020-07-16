@@ -1,17 +1,32 @@
 package snapshots
 
 import (
+	"context"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 
+	"github.com/fairwindsops/gemini/pkg/kube"
 	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 )
+
+func updateSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
+	klog.Infof("%s/%s: updating PVC spec", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	client := kube.GetClient()
+	_, err := client.SnapshotGroupClient.SnapshotGroups(sg.ObjectMeta.Namespace).Update(context.Background(), sg, metav1.UpdateOptions{})
+	return err
+}
 
 // ReconcileBackupsForSnapshotGroup handles any changes to SnapshotGroups
 func ReconcileBackupsForSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 	klog.Infof("%s/%s: reconciling", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
-	err := maybeCreatePVC(sg)
+	pvc, err := maybeCreatePVC(sg)
+	if err != nil {
+		return err
+	}
+	sg.Spec.Claim.Spec = pvc.Spec
+	err = updateSnapshotGroup(sg)
 	if err != nil {
 		return err
 	}
