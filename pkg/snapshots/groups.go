@@ -3,14 +3,14 @@ package snapshots
 import (
 	"fmt"
 
-	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 	"k8s.io/klog"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 // ReconcileBackupsForSnapshotGroup handles any changes to SnapshotGroups
-func ReconcileBackupsForSnapshotGroup(sg *v1.SnapshotGroup) error {
+func ReconcileBackupsForSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 	klog.Infof("%s/%s: reconciling", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	err := maybeCreatePVC(sg)
 	if err != nil {
@@ -45,7 +45,7 @@ func ReconcileBackupsForSnapshotGroup(sg *v1.SnapshotGroup) error {
 }
 
 // RestoreSnapshotGroup restores the PV to a particular snapshot
-func RestoreSnapshotGroup(sg *v1.SnapshotGroup) error {
+func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 	restorePoint := sg.ObjectMeta.Annotations[RestoreAnnotation]
 	if restorePoint == "" {
 		err := fmt.Errorf("%s/%s: has invalid restore annotation %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
@@ -68,7 +68,7 @@ func RestoreSnapshotGroup(sg *v1.SnapshotGroup) error {
 }
 
 // OnSnapshotGroupDelete is called when a SnapshotGroup is removed
-func OnSnapshotGroupDelete(sg *v1.SnapshotGroup) error {
+func OnSnapshotGroupDelete(sg *snapshotgroup.SnapshotGroup) error {
 	// TODO(rbren): option to delete snapshots on group deletion
 	name := sg.ObjectMeta.Name
 	namespace := sg.ObjectMeta.Namespace

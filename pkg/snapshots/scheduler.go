@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 	"k8s.io/klog"
 )
 
@@ -21,7 +21,7 @@ var durations = map[string]time.Duration{
 	"year":  time.Hour * 24 * 365,
 }
 
-func getSnapshotChanges(schedules []v1.SnapshotSchedule, snapshots []GeminiSnapshot) ([]string, []GeminiSnapshot, error) {
+func getSnapshotChanges(schedules []snapshotgroup.SnapshotSchedule, snapshots []GeminiSnapshot) ([]string, []GeminiSnapshot, error) {
 	numToKeepByInterval := map[string]int{}
 	numSnapshotsByInterval := map[string]int{}
 	for _, schedule := range schedules {

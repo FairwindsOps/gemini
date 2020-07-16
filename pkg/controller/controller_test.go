@@ -10,7 +10,7 @@ import (
 
 	"github.com/fairwindsops/gemini/pkg/kube"
 	"github.com/fairwindsops/gemini/pkg/snapshots"
-	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 )
 
 var (
@@ -18,17 +18,17 @@ var (
 	noResyncPeriodFunc = func() time.Duration { return 0 }
 )
 
-func newSnapshotGroup(name string) *v1.SnapshotGroup {
-	return &v1.SnapshotGroup{
-		TypeMeta: metav1.TypeMeta{APIVersion: v1.SchemeGroupVersion.String()},
+func newSnapshotGroup(name string) *snapshotgroup.SnapshotGroup {
+	return &snapshotgroup.SnapshotGroup{
+		TypeMeta: metav1.TypeMeta{APIVersion: snapshotgroup.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
 			Namespace:   metav1.NamespaceDefault,
 			Annotations: map[string]string{},
 		},
-		Spec: v1.SnapshotGroupSpec{
-			Schedule: []v1.SnapshotSchedule{
-				v1.SnapshotSchedule{
+		Spec: snapshotgroup.SnapshotGroupSpec{
+			Schedule: []snapshotgroup.SnapshotSchedule{
+				{
 					Every: "1 second",
 					Keep:  1,
 				},

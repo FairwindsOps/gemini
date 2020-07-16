@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/fairwindsops/gemini/pkg/kube"
-	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 
 	snapshotsv1 "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -27,7 +27,7 @@ type GeminiSnapshot struct {
 }
 
 // ListSnapshots returns all snapshots associated with a particular SnapshotGroup
-func ListSnapshots(sg *v1.SnapshotGroup) ([]GeminiSnapshot, error) {
+func ListSnapshots(sg *snapshotgroup.SnapshotGroup) ([]GeminiSnapshot, error) {
 	client := kube.GetClient()
 	snapshots, err := client.SnapshotClient.Namespace(sg.ObjectMeta.Namespace).List(metav1.ListOptions{})
 	if err != nil {
@@ -72,7 +72,7 @@ func ListSnapshots(sg *v1.SnapshotGroup) ([]GeminiSnapshot, error) {
 }
 
 // createSnapshot creates a new snappshot for a given SnapshotGroup
-func createSnapshot(sg *v1.SnapshotGroup, annotations map[string]string) error {
+func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]string) error {
 	timestamp := strconv.Itoa(int(time.Now().Unix()))
 	annotations[TimestampAnnotation] = timestamp
 	annotations[managedByAnnotation] = managerName
@@ -119,7 +119,7 @@ func createSnapshot(sg *v1.SnapshotGroup, annotations map[string]string) error {
 	return err
 }
 
-func createSnapshotForIntervals(sg *v1.SnapshotGroup, intervals []string) error {
+func createSnapshotForIntervals(sg *snapshotgroup.SnapshotGroup, intervals []string) error {
 	if len(intervals) == 0 {
 		return nil
 	}
@@ -130,7 +130,7 @@ func createSnapshotForIntervals(sg *v1.SnapshotGroup, intervals []string) error 
 	return createSnapshot(sg, annotations)
 }
 
-func createSnapshotForRestore(sg *v1.SnapshotGroup) error {
+func createSnapshotForRestore(sg *snapshotgroup.SnapshotGroup) error {
 	restore := sg.ObjectMeta.Annotations[RestoreAnnotation]
 	existing, err := ListSnapshots(sg)
 	if err != nil {

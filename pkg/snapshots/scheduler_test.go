@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	v1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBasicSchedule(t *testing.T) {
-	schedule := v1.SnapshotSchedule{
+	schedule := snapshotgroup.SnapshotSchedule{
 		Every: "minute",
 		Keep:  4,
 	}
@@ -37,7 +37,7 @@ func TestBasicSchedule(t *testing.T) {
 			Timestamp: start,
 		},
 	}
-	toCreate, toDelete, err := getSnapshotChanges([]v1.SnapshotSchedule{schedule}, existing)
+	toCreate, toDelete, err := getSnapshotChanges([]snapshotgroup.SnapshotSchedule{schedule}, existing)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(toDelete))
 	assert.Equal(t, existing[4], toDelete[0])
