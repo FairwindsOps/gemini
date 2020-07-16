@@ -65,11 +65,24 @@ func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClai
 
 func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
 	klog.Infof("%s/%s: restoring PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	existing, err := getPVC(sg)
+	if err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+
+	err = deletePVC(sg)
+	if err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+
 	restorePoint := sg.ObjectMeta.Annotations[RestoreAnnotation]
 	annotations := map[string]string{
 		RestoreAnnotation: restorePoint,
 	}
 	spec := sg.Spec.Claim.Spec
+	if existing != nil {
+		spec = existing.Spec
+	}
 	apiGroup := kube.VolumeSnapshotGroupName
 	spec.DataSource = &corev1.TypedLocalObjectReference{
 		APIGroup: &apiGroup,

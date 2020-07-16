@@ -3,10 +3,9 @@ package snapshots
 import (
 	"fmt"
 
-	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 	"k8s.io/klog"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 )
 
 // ReconcileBackupsForSnapshotGroup handles any changes to SnapshotGroups
@@ -54,10 +53,6 @@ func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 	klog.Infof("%s/%s: restoring to %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
 	err := createSnapshotForRestore(sg)
 	if err != nil {
-		return err
-	}
-	err = deletePVC(sg)
-	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	err = restorePVC(sg)

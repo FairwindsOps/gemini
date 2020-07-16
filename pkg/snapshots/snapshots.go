@@ -86,7 +86,8 @@ func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]stri
 		},
 		Spec: sg.Spec.Template.Spec,
 	}
-	snapshot.Spec.Source.PersistentVolumeClaimName = &sg.ObjectMeta.Name
+	name := getPVCName(sg)
+	snapshot.Spec.Source.PersistentVolumeClaimName = &name
 
 	marshaled, err := json.Marshal(snapshot)
 	if err != nil {
