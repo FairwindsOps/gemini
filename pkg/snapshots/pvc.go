@@ -12,15 +12,47 @@ import (
 	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 )
 
-func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, annotations map[string]string) error {
-	klog.Infof("%s/%s: creating PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+func getPVCName(sg *snapshotgroup.SnapshotGroup) string {
+	name := sg.Spec.Claim.Name
+	if name == "" {
+		name = sg.ObjectMeta.Name
+	}
+	return name
+}
+
+func getPVC(sg *snapshotgroup.SnapshotGroup) (*corev1.PersistentVolumeClaim, error) {
+	client := kube.GetClient()
+	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
+	pvc, err := pvcClient.Get(getPVCName(sg), metav1.GetOptions{})
+	return pvc, err
+}
+
+func maybeCreatePVC(sg *snapshotgroup.SnapshotGroup) (*corev1.PersistentVolumeClaim, error) {
+	pvc, err := getPVC(sg)
+	if err == nil {
+		klog.Infof("%s/%s: PVC found", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
+		return pvc, nil
+	}
+	if !errors.IsNotFound(err) {
+		return nil, err
+	}
+	if sg.Spec.Claim.Name != "" {
+		return nil, fmt.Errorf("%s/%s: could not find existing PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, sg.Spec.Claim.Name)
+	}
+	klog.Infof("%s/%s: PVC not found, creating it", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	return createPVC(sg, sg.Spec.Claim.Spec, nil)
+}
+
+func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, annotations map[string]string) (*corev1.PersistentVolumeClaim, error) {
+	name := getPVCName(sg)
+	klog.Infof("%s/%s: creating PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
 	annotations[managedByAnnotation] = managerName
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        sg.ObjectMeta.Name,
+			Name:        name,
 			Namespace:   sg.ObjectMeta.Namespace,
 			Annotations: annotations,
 		},
@@ -28,34 +60,16 @@ func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClai
 	}
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
-	_, err := pvcClient.Create(pvc)
-	return err
-}
-
-func maybeCreatePVC(sg *snapshotgroup.SnapshotGroup) error {
-	client := kube.GetClient()
-	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
-	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
-	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
-		}
-		klog.Infof("%s/%s: PVC not found, creating it", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
-		err := createPVC(sg, sg.Spec.Claim.Spec, nil)
-		if err != nil {
-			return err
-		}
-	} else {
-		klog.Infof("%s/%s: PVC found", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
-		if pvc.ObjectMeta.Annotations[managedByAnnotation] != managerName {
-			return fmt.Errorf("%s/%s: PVC found, but not managed by Gemini", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
-		}
-	}
-	return nil
+	return pvcClient.Create(pvc)
 }
 
 func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
 	klog.Infof("%s/%s: restoring PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	err := deletePVC(sg)
+	if err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+
 	restorePoint := sg.ObjectMeta.Annotations[RestoreAnnotation]
 	annotations := map[string]string{
 		RestoreAnnotation: restorePoint,
@@ -67,12 +81,14 @@ func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
 		Kind:     kube.VolumeSnapshotKind,
 		Name:     sg.ObjectMeta.Name + "-" + restorePoint,
 	}
-	return createPVC(sg, spec, annotations)
+	_, err = createPVC(sg, spec, annotations)
+	return err
 }
 
 func deletePVC(sg *snapshotgroup.SnapshotGroup) error {
-	klog.Infof("%s/%s: deleting PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	name := getPVCName(sg)
+	klog.Infof("%s/%s: deleting PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
-	return pvcClient.Delete(sg.ObjectMeta.Name, &metav1.DeleteOptions{})
+	return pvcClient.Delete(name, &metav1.DeleteOptions{})
 }

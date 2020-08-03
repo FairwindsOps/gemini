@@ -13,6 +13,7 @@ import (
 
 	snapshotgroupv1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 	snapshotGroupClientset "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/clientset/versioned"
+	snapshotgroupInterface "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/clientset/versioned/typed/snapshotgroup/v1beta1"
 	"github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/informers/externalversions"
 	informers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/informers/externalversions/snapshotgroup/v1beta1"
 )
@@ -30,6 +31,7 @@ type Client struct {
 	Informer              informers.SnapshotGroupInformer
 	InformerFactory       externalversions.SharedInformerFactory
 	SnapshotClient        dynamic.NamespaceableResourceInterface
+	SnapshotGroupClient   snapshotgroupInterface.SnapshotgroupV1beta1Interface
 	VolumeSnapshotVersion string
 }
 
@@ -56,12 +58,12 @@ func createClient() *Client {
 	if err != nil {
 		panic(err)
 	}
-	clientSet, err := snapshotGroupClientset.NewForConfig(kubeConf)
+	sgClientSet, err := snapshotGroupClientset.NewForConfig(kubeConf)
 	if err != nil {
 		panic(err)
 	}
 
-	informerFactory := externalversions.NewSharedInformerFactory(clientSet, time.Second*30)
+	informerFactory := externalversions.NewSharedInformerFactory(sgClientSet, time.Second*30)
 	informer := informerFactory.Snapshotgroup().V1beta1().SnapshotGroups()
 
 	resources, err := restmapper.GetAPIGroupResources(k8s.Discovery())
@@ -73,11 +75,10 @@ func createClient() *Client {
 	if err != nil {
 		panic(err)
 	}
-	gk := schema.GroupKind{
+	vsMapping, err := restMapper.RESTMapping(schema.GroupKind{
 		Group: VolumeSnapshotGroupName,
 		Kind:  VolumeSnapshotKind,
-	}
-	mapping, err := restMapper.RESTMapping(gk)
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -85,7 +86,7 @@ func createClient() *Client {
 	if err != nil {
 		panic(err)
 	}
-	snapshotClient := dynamicInterface.Resource(mapping.Resource)
+	snapshotClient := dynamicInterface.Resource(vsMapping.Resource)
 
 	if _, err = snapshotgroupv1.CreateCustomResourceDefinition("crd-ns", extClientSet); err != nil {
 		panic(err)
@@ -95,6 +96,7 @@ func createClient() *Client {
 		Informer:              informer,
 		InformerFactory:       informerFactory,
 		SnapshotClient:        snapshotClient,
+		SnapshotGroupClient:   sgClientSet.SnapshotgroupV1beta1(),
 		VolumeSnapshotVersion: VolumeSnapshotGroupName + "/" + snapshotCRD.Spec.Version,
 	}
 }

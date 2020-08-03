@@ -38,9 +38,10 @@ func createFakeClient() *Client {
 	})
 
 	return &Client{
-		K8s:             k8s,
-		Informer:        informer,
-		InformerFactory: informerFactory,
-		SnapshotClient:  snapshotClient,
+		K8s:                 k8s,
+		Informer:            informer,
+		InformerFactory:     informerFactory,
+		SnapshotClient:      snapshotClient,
+		SnapshotGroupClient: snapshotGroupClientSet.SnapshotgroupV1beta1(),
 	}
 }

@@ -1,11 +1,14 @@
 package controller
 
 import (
+	"context"
+	//"fmt"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/fairwindsops/gemini/pkg/kube"
@@ -18,12 +21,12 @@ var (
 	noResyncPeriodFunc = func() time.Duration { return 0 }
 )
 
-func newSnapshotGroup(name string) *snapshotgroup.SnapshotGroup {
+func newSnapshotGroup(name, namespace string) *snapshotgroup.SnapshotGroup {
 	return &snapshotgroup.SnapshotGroup{
 		TypeMeta: metav1.TypeMeta{APIVersion: snapshotgroup.SchemeGroupVersion.String()},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
-			Namespace:   metav1.NamespaceDefault,
+			Namespace:   namespace,
 			Annotations: map[string]string{},
 		},
 		Spec: snapshotgroup.SnapshotGroupSpec{
@@ -37,25 +40,29 @@ func newSnapshotGroup(name string) *snapshotgroup.SnapshotGroup {
 	}
 }
 
-func newTestController() *Controller {
+func newTestController() (*Controller, *kube.Client) {
 	kube.SetFakeClient()
-	return NewController()
+	return NewController(), kube.GetClient()
 }
 
 func TestControllerQueue(t *testing.T) {
-	ctrl := newTestController()
-	sg := newSnapshotGroup("foo")
+	ctrl, _ := newTestController()
+	sg := newSnapshotGroup("foo", "default")
 	ctrl.enqueue(sg, deleteTask)
 	processed := ctrl.processNextWorkItem()
 	assert.Equal(t, true, processed)
 }
 
 func TestBackupHandler(t *testing.T) {
-	ctrl := newTestController()
-	sg := newSnapshotGroup("foo")
+	ctrl, client := newTestController()
+
+	sg := newSnapshotGroup("foo", "foo")
 	snaps, err := snapshots.ListSnapshots(sg)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(snaps))
+
+	_, err = client.SnapshotGroupClient.SnapshotGroups("foo").Create(context.Background(), sg, metav1.CreateOptions{})
+	assert.NoError(t, err)
 
 	event := workItem{
 		name:          "foo",
@@ -71,7 +78,6 @@ func TestBackupHandler(t *testing.T) {
 	assert.Equal(t, 1, len(snaps))
 	assert.Equal(t, []string{"1 second"}, snaps[0].Intervals)
 
-	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
@@ -104,15 +110,20 @@ func TestBackupHandler(t *testing.T) {
 }
 
 func TestRestoreHandler(t *testing.T) {
-	ctrl := newTestController()
-	sg := newSnapshotGroup("foo")
+	ctrl, client := newTestController()
+	sgName := "foo"
+	sgNamespace := "default"
+	sg := newSnapshotGroup(sgName, sgNamespace)
 	snaps, err := snapshots.ListSnapshots(sg)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(snaps))
 
+	_, err = client.SnapshotGroupClient.SnapshotGroups(sgNamespace).Create(context.Background(), sg, metav1.CreateOptions{})
+	assert.NoError(t, err)
+
 	event := workItem{
-		name:          "foo",
-		namespace:     "foo",
+		name:          sgName,
+		namespace:     sgNamespace,
 		snapshotGroup: sg,
 		task:          backupTask,
 	}
@@ -124,7 +135,6 @@ func TestRestoreHandler(t *testing.T) {
 	assert.Equal(t, 1, len(snaps))
 	assert.Equal(t, []string{"1 second"}, snaps[0].Intervals)
 
-	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
@@ -151,14 +161,86 @@ func TestRestoreHandler(t *testing.T) {
 }
 
 func TestDeleteHandler(t *testing.T) {
-	ctrl := newTestController()
+	ctrl, _ := newTestController()
 
 	event := workItem{
 		name:          "foo",
 		namespace:     "foo",
-		snapshotGroup: newSnapshotGroup("foo"),
+		snapshotGroup: newSnapshotGroup("foo", "default"),
 		task:          deleteTask,
 	}
 	err := ctrl.syncHandler(event)
 	assert.NoError(t, err)
+}
+
+func TestPreexistingPVC(t *testing.T) {
+	ctrl, client := newTestController()
+
+	namespace := "default"
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "pre-existing",
+			Namespace: namespace,
+			Annotations: map[string]string{
+				"app.kubernetes.io/managed-by": "me",
+			},
+		},
+	}
+	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(namespace)
+	_, err := pvcClient.Create(pvc)
+	assert.NoError(t, err)
+
+	pvcs, err := pvcClient.List(metav1.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(pvcs.Items))
+	existingPVC := pvcs.Items[0]
+	assert.Equal(t, "pre-existing", existingPVC.ObjectMeta.Name)
+	assert.Equal(t, "me", existingPVC.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
+	assert.Equal(t, "", existingPVC.ObjectMeta.Annotations["gemini.fairwinds.com/restore"])
+
+	sg := newSnapshotGroup("foo", namespace)
+	sg.Spec.Claim.Name = "pre-existing"
+	snaps, err := snapshots.ListSnapshots(sg)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(snaps))
+
+	_, err = client.SnapshotGroupClient.SnapshotGroups(namespace).Create(context.Background(), sg, metav1.CreateOptions{})
+	assert.NoError(t, err)
+
+	event := workItem{
+		name:          "foo",
+		namespace:     namespace,
+		snapshotGroup: sg,
+		task:          backupTask,
+	}
+	err = ctrl.syncHandler(event)
+	assert.NoError(t, err)
+
+	snaps, err = snapshots.ListSnapshots(sg)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(snaps))
+	assert.Equal(t, []string{"1 second"}, snaps[0].Intervals)
+
+	pvcs, err = pvcClient.List(metav1.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(pvcs.Items))
+	existingPVC = pvcs.Items[0]
+	assert.Equal(t, "pre-existing", existingPVC.ObjectMeta.Name)
+	assert.Equal(t, "me", existingPVC.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
+	assert.Equal(t, "", existingPVC.ObjectMeta.Annotations["gemini.fairwinds.com/restore"])
+
+	time.Sleep(time.Second)
+	timestamp := strconv.Itoa(int(snaps[0].Timestamp.Unix()))
+	sg.ObjectMeta.Annotations["gemini.fairwinds.com/restore"] = timestamp
+	event.task = restoreTask
+	err = ctrl.syncHandler(event)
+	assert.NoError(t, err)
+
+	pvcs, err = pvcClient.List(metav1.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(pvcs.Items))
+	newPVC := pvcs.Items[0]
+	assert.Equal(t, "pre-existing", newPVC.ObjectMeta.Name)
+	assert.Equal(t, "gemini", newPVC.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
+	assert.Equal(t, timestamp, newPVC.ObjectMeta.Annotations["gemini.fairwinds.com/restore"])
 }
