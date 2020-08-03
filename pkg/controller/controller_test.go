@@ -46,8 +46,8 @@ func newTestController() (*Controller, *kube.Client) {
 }
 
 func TestControllerQueue(t *testing.T) {
-	ctrl := newTestController()
-	sg := newSnapshotGroup("foo")
+	ctrl, _ := newTestController()
+	sg := newSnapshotGroup("foo", "default")
 	ctrl.enqueue(sg, deleteTask)
 	processed := ctrl.processNextWorkItem()
 	assert.Equal(t, true, processed)
