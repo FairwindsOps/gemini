@@ -39,7 +39,7 @@ hourly, daily, monthly, and yearly backups.
 
 ```yaml
 cat <<EOF | kubectl apply -f -
-apiVersion: gemini.fairwinds.com/v1
+apiVersion: gemini.fairwinds.com/v1beta1
 kind: SnapshotGroup
 metadata:
   name: test-volume
