@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"context"
+	//"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -38,9 +40,9 @@ func newSnapshotGroup(name, namespace string) *snapshotgroup.SnapshotGroup {
 	}
 }
 
-func newTestController() *Controller {
+func newTestController() (*Controller, *kube.Client) {
 	kube.SetFakeClient()
-	return NewController()
+	return NewController(), kube.GetClient()
 }
 
 func TestControllerQueue(t *testing.T) {
@@ -52,15 +54,19 @@ func TestControllerQueue(t *testing.T) {
 }
 
 func TestBackupHandler(t *testing.T) {
-	ctrl := newTestController()
-	sg := newSnapshotGroup("foo", "default")
+	ctrl, client := newTestController()
+
+	sg := newSnapshotGroup("foo", "foo")
 	snaps, err := snapshots.ListSnapshots(sg)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(snaps))
 
+	_, err = client.SnapshotGroupClient.SnapshotGroups("foo").Create(context.Background(), sg, metav1.CreateOptions{})
+	assert.NoError(t, err)
+
 	event := workItem{
 		name:          "foo",
-		namespace:     "default",
+		namespace:     "foo",
 		snapshotGroup: sg,
 		task:          backupTask,
 	}
@@ -72,7 +78,6 @@ func TestBackupHandler(t *testing.T) {
 	assert.Equal(t, 1, len(snaps))
 	assert.Equal(t, []string{"1 second"}, snaps[0].Intervals)
 
-	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
@@ -105,15 +110,20 @@ func TestBackupHandler(t *testing.T) {
 }
 
 func TestRestoreHandler(t *testing.T) {
-	ctrl := newTestController()
-	sg := newSnapshotGroup("foo", "default")
+	ctrl, client := newTestController()
+	sgName := "foo"
+	sgNamespace := "default"
+	sg := newSnapshotGroup(sgName, sgNamespace)
 	snaps, err := snapshots.ListSnapshots(sg)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(snaps))
 
+	_, err = client.SnapshotGroupClient.SnapshotGroups(sgNamespace).Create(context.Background(), sg, metav1.CreateOptions{})
+	assert.NoError(t, err)
+
 	event := workItem{
-		name:          "foo",
-		namespace:     "default",
+		name:          sgName,
+		namespace:     sgNamespace,
 		snapshotGroup: sg,
 		task:          backupTask,
 	}
@@ -125,7 +135,6 @@ func TestRestoreHandler(t *testing.T) {
 	assert.Equal(t, 1, len(snaps))
 	assert.Equal(t, []string{"1 second"}, snaps[0].Intervals)
 
-	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
@@ -152,7 +161,7 @@ func TestRestoreHandler(t *testing.T) {
 }
 
 func TestDeleteHandler(t *testing.T) {
-	ctrl := newTestController()
+	ctrl, _ := newTestController()
 
 	event := workItem{
 		name:          "foo",
@@ -165,7 +174,7 @@ func TestDeleteHandler(t *testing.T) {
 }
 
 func TestPreexistingPVC(t *testing.T) {
-	ctrl := newTestController()
+	ctrl, client := newTestController()
 
 	namespace := "default"
 	pvc := &corev1.PersistentVolumeClaim{
@@ -177,7 +186,6 @@ func TestPreexistingPVC(t *testing.T) {
 			},
 		},
 	}
-	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(namespace)
 	_, err := pvcClient.Create(pvc)
 	assert.NoError(t, err)
@@ -195,6 +203,9 @@ func TestPreexistingPVC(t *testing.T) {
 	snaps, err := snapshots.ListSnapshots(sg)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(snaps))
+
+	_, err = client.SnapshotGroupClient.SnapshotGroups(namespace).Create(context.Background(), sg, metav1.CreateOptions{})
+	assert.NoError(t, err)
 
 	event := workItem{
 		name:          "foo",
