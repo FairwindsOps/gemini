@@ -20,14 +20,14 @@ type SnapshotGroup struct {
 }
 
 type SnapshotGroupSpec struct {
-	Claim    SnapshotClaim      `json:"pvc"`
+	Claim    SnapshotClaim      `json:"persistentVolumeClaim"`
 	Template SnapshotTemplate   `json:"template"`
 	Schedule []SnapshotSchedule `json:"schedule"`
 }
 
 type SnapshotClaim struct {
 	Spec corev1.PersistentVolumeClaimSpec `json:"spec"`
-	Name string                           `json:"name"`
+	Name string                           `json:"claimName"`
 }
 
 type SnapshotTemplate struct {
