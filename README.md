@@ -44,7 +44,7 @@ kind: SnapshotGroup
 metadata:
   name: test-volume
 spec:
-  claim:
+  pvc:
     spec:
       accessModes:
         - ReadWriteOnce

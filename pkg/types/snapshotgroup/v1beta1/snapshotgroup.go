@@ -20,7 +20,7 @@ type SnapshotGroup struct {
 }
 
 type SnapshotGroupSpec struct {
-	Claim    SnapshotClaim      `json:"claim"`
+	Claim    SnapshotClaim      `json:"pvc"`
 	Template SnapshotTemplate   `json:"template"`
 	Schedule []SnapshotSchedule `json:"schedule"`
 }

@@ -4,7 +4,7 @@ metadata:
   name: hackmd
   namespace: notepad
 spec:
-  claim:
+  pvc:
     name: hackmd
   schedule:
     - every: "10 minutes"
@@ -18,7 +18,7 @@ metadata:
   name: hackmd-postgresql
   namespace: notepad
 spec:
-  claim:
+  pvc:
     name: data-hackmd-postgresql-0
   schedule:
     - every: "10 minutes"
