@@ -31,14 +31,41 @@ helm install -n gemini gemini ./deploy/charts/gemini
 ## Usage
 
 ### Backup
-> Note: Gemini does not yet work with existing PVCs - it can only create a new one
+Gemini can schedule backups for an existing PVC, or create a new PVC to back up.
 
-The following example creates a 1Gi PVC, and schedules backups every 10 minutes.
+#### Existing PVC
+> See the [extended example](/examples/pre-existing/README.md)
+
+The following example schedules backups every 10 minutes for a pre-existing PVC named `postgres`.
+
 The `schedule` parameter tells Gemini to always keep the last 3 backups, as well as
 hourly, daily, monthly, and yearly backups.
 
 ```yaml
-cat <<EOF | kubectl apply -f -
+apiVersion: gemini.fairwinds.com/v1beta1
+kind: SnapshotGroup
+metadata:
+  name: test-volume
+spec:
+  persistentVolumeClaim:
+    claimName: postgres
+  schedule:
+    - every: 10 minutes
+      keep: 3
+    - every: hour
+      keep: 1
+    - every: day
+      keep: 1
+    - every: month
+      keep: 1
+    - every: year
+      keep: 1
+```
+
+#### New PVC
+You can also specify an entire PVC spec inside the SnapshotGroup if you'd like Gemini to create
+the PVC for you.
+```yaml
 apiVersion: gemini.fairwinds.com/v1beta1
 kind: SnapshotGroup
 metadata:
@@ -54,15 +81,6 @@ spec:
   schedule:
     - every: 10 minutes
       keep: 3
-    - every: hour
-      keep: 1
-    - every: day
-      keep: 1
-    - every: month
-      keep: 1
-    - every: year
-      keep: 1
-EOF
 ```
 
 ### Restore
