@@ -7,7 +7,7 @@ spec:
   template:
     spec:
       volumeSnapshotClassName: aws-ebs-snapclass
-  claim:
+  persistentVolumeClaim:
     spec:
       storageClassName: ebs-sc
       accessModes:
