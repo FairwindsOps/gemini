@@ -2,7 +2,7 @@
   <img src="/logo.png" alt="Gemini Logo" />
   <br>
 
-  [![Version][version-image]][version-link] [![CircleCI][circleci-image]][circleci-link] [![Go Report Card][goreport-image]][goreport-link]
+  [![Version][version-image]][version-link] [![CircleCI][circleci-image]][circleci-link] [![Go Report Card][goreport-image]][goreport-link] [![Codecov][codecov-image]][codecov-link]
 </div>
 
 [version-image]: https://img.shields.io/static/v1.svg?label=Version&message=0.0.1&color=239922
