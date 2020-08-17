@@ -55,7 +55,7 @@ func getSnapshotChanges(schedules []snapshotgroup.SnapshotSchedule, snapshots []
 		needsCreation[schedule.Every] = true
 	}
 	for _, snapshot := range snapshots {
-		klog.V(9).Infof("Checking snapshot %s/%s", snapshot.Namespace, snapshot.Name)
+		klog.V(5).Infof("Checking snapshot %s/%s", snapshot.Namespace, snapshot.Name)
 		keep := false
 		for _, interval := range snapshot.Intervals {
 			if numSnapshotsByInterval[interval] == 0 {
@@ -86,7 +86,7 @@ func getSnapshotChanges(schedules []snapshotgroup.SnapshotSchedule, snapshots []
 	for k, v := range needsCreation {
 		klog.Infof("need creation %v %v", k, v)
 		if v {
-			klog.V(9).Infof("Need creation for interval %s: %t", k, v)
+			klog.V(5).Infof("Need creation for interval %s: %t", k, v)
 			toCreate = append(toCreate, k)
 		}
 	}
