@@ -35,10 +35,9 @@ Before getting started with Gemini, it's a good idea to make sure you're able to
 The Gemini Helm chart will install both the CRD and the operator into your cluster
 
 ```bash
-# TODO: change to charts repo
-git clone https://github.com/FairwindsOps/gemini
 kubectl create ns gemini
-helm install -n gemini gemini ./deploy/charts/gemini
+helm repo add fairwinds-stable https://charts.fairwinds.com/stable 
+helm install gemini fairwinds-stable/gemini --namespace gemini 
 ```
 
 ## Usage
