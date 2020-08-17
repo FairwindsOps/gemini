@@ -56,6 +56,10 @@ func getSnapshotChanges(schedules []snapshotgroup.SnapshotSchedule, snapshots []
 	}
 	for _, snapshot := range snapshots {
 		klog.V(5).Infof("Checking snapshot %s/%s", snapshot.Namespace, snapshot.Name)
+		if snapshot.Restore != "" {
+			klog.V(5).Infof("Snipping restore snapshot %s/%s", snapshot.Namespace, snapshot.Name)
+			continue
+		}
 		keep := false
 		for _, interval := range snapshot.Intervals {
 			if numSnapshotsByInterval[interval] == 0 {
