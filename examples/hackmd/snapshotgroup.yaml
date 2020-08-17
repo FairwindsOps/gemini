@@ -5,12 +5,7 @@ metadata:
   namespace: notepad
 spec:
   persistentVolumeClaim:
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 1Gi
+    claimName: hackmd
   schedule:
     - every: "10 minutes"
       keep: 3
@@ -24,12 +19,7 @@ metadata:
   namespace: notepad
 spec:
   persistentVolumeClaim:
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 2Gi
+    claimName: data-hackmd-postgresql-0
   schedule:
     - every: "10 minutes"
       keep: 3

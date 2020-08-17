@@ -77,3 +77,11 @@ workflows:
               ignore: /.*/
             tags:
               only: /.*/
+      - rok8s-scripts/github_release:
+          requires:
+            - build-and-push-container
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/

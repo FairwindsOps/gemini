@@ -17,6 +17,7 @@ package snapshots
 import (
 	"context"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
@@ -28,6 +29,7 @@ import (
 func updateSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 	klog.Infof("%s/%s: updating PVC spec", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	client := kube.GetClient()
+	sg.Spec.Claim.Spec.VolumeName = ""
 	_, err := client.SnapshotGroupClient.SnapshotGroups(sg.ObjectMeta.Namespace).Update(context.Background(), sg, metav1.UpdateOptions{})
 	return err
 }
@@ -84,6 +86,8 @@ func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 	if err != nil {
 		return err
 	}
+	// FIXME: wait until the snapshot is ready
+	time.Sleep(10 * time.Second)
 	err = restorePVC(sg)
 	if err != nil {
 		return err

@@ -1,12 +1,13 @@
 module github.com/fairwindsops/gemini
 
-go 1.13
+go 1.14
 
 require (
 	github.com/kr/pretty v0.0.0-20140812000539-f31442d60e51 // indirect
 	github.com/kr/text v0.0.0-20130911015532-6807e777504f // indirect
 	github.com/kubernetes-csi/external-snapshotter v1.2.1-0.20200106204216-fd8d8a33ddb5
 	github.com/stretchr/testify v1.4.0
+	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	k8s.io/api v0.18.0
 	k8s.io/apiextensions-apiserver v0.17.2
 	k8s.io/apimachinery v0.18.0
