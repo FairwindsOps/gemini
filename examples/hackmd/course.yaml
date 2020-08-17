@@ -1,16 +1,7 @@
 namespace: notepad
-repositories:
-  rbrenfork:
-    git: git@github.com:rbren/charts.git
-    path: stable
 charts:
   hackmd:
-    repository: rbrenfork
     namespace: notepad
     values:
       postgresql:
         postgresqlPassword: thisisnotasecret
-        persistence:
-          existingClaim: hackmd-postgresql
-      persistence:
-        existingClaim: hackmd

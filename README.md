@@ -57,7 +57,7 @@ Before getting started with Gemini, it's a good idea to make sure you're able to
 Gemini can schedule backups for an existing PVC, or create a new PVC to back up.
 
 #### Existing PVC
-> See the [extended example](/examples/pre-existing/README.md)
+> See the [extended example](/examples/hackmd/README.md)
 
 The following example schedules backups every 10 minutes for a pre-existing PVC named `postgres`.
 
