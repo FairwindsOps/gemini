@@ -14,6 +14,9 @@
 [circleci-image]: https://circleci.com/gh/FairwindsOps/gemini.svg?style=svg
 [circleci-link]: https://circleci.com/gh/FairwindsOps/gemini
 
+[codecov-image]: https://codecov.io/gh/FairwindsOps/gemini/branch/master/graph/badge.svg?token=7C20K7SYNR
+[codecov-link]: https://codecov.io/gh/FairwindsOps/gemini
+
 Gemini is a Kubernetes CRD and operator for managing `VolumeSnapshots`. This allows you
 to back up your `PersistentVolumes` on a regular schedule, retire old backups, and restore
 backups with minimal downtime.
