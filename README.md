@@ -29,10 +29,14 @@ You'll need to have the `VolumeSnapshot` API available in your cluster. This API
 [beta as of Kubernetes 1.17](https://kubernetes.io/docs/concepts/storage/volume-snapshots/),
 and was introduced as alpha in 1.12.
 
+To check if your cluster has `VolumeSnapshots` available, you can run
+```bash
+kubectl api-resources | grep volumesnapshots
+```
+
 * To enable on v1.12-16, set the flag `--feature-gates=VolumeSnapshotDataSource=true` on the API server binary [source](https://kubernetes.io/blog/2018/10/09/introducing-volume-snapshot-alpha-for-kubernetes/#kubernetes-snapshots-requirements)
 * To enable VolumeSnapshots on kops, see our [instructions here](/examples/bash)
-* Some managed Kubernetes providers like DigitalOcean support VolumeSnapshots by default, even on older versions
-* Depending on your environment, you may need to configure the VolumeSnapshot API as well as the CSI.
+* Depending on your environment, you may need to configure the VolumeSnapshot API as well as the CSI. Fortunately, some managed Kubernetes providers like DigitalOcean support VolumeSnapshots by default, even on older versions
 
 Before getting started with Gemini, it's a good idea to make sure you're able to
 [create a VolumeSnapshot manually](https://kubernetes.io/docs/concepts/storage/volume-snapshots/#volumesnapshots).
