@@ -12,11 +12,14 @@
 [goreport-link]: https://goreportcard.com/report/github.com/FairwindsOps/gemini
 
 [circleci-image]: https://circleci.com/gh/FairwindsOps/gemini.svg?style=svg
-[circleci-link]: https://circleci.com/gh/FairwindsOps/gemini.svg
+[circleci-link]: https://circleci.com/gh/FairwindsOps/gemini
 
 Gemini is a Kubernetes CRD and operator for managing `VolumeSnapshots`. This allows you
 to back up your `PersistentVolumes` on a regular schedule, retire old backups, and restore
 backups with minimal downtime.
+
+
+**Want to learn more?** Reach out on [the Slack channel](https://fairwindscommunity.slack.com/messages/gemini) ([request invite](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g)), send an email to `opensource@fairwinds.com`, or join us for [office hours on Zoom](https://fairwindscommunity.slack.com/messages/office-hours)
 
 ## Prerequisites
 You'll need to have the `VolumeSnapshot` API available in your cluster. This API is in
