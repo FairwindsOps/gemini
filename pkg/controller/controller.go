@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/time/rate"
 	"k8s.io/apimachinery/pkg/api/meta"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -58,13 +59,21 @@ type workItem struct {
 	task          task
 }
 
+func getRateLimiter() workqueue.RateLimiter {
+	return workqueue.NewMaxOfRateLimiter(
+		workqueue.NewItemExponentialFailureRateLimiter(time.Second, 1000*time.Second),
+		// 10 qps, 100 bucket size.  This is only for retry speed and its only the overall factor (not per item)
+		&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(10), 100)},
+	)
+}
+
 // NewController creates a new SnapshotGroup controller
 func NewController() *Controller {
 	client := kube.GetClient()
 	controller := &Controller{
 		sgLister:  client.Informer.Lister(),
 		sgSynced:  client.Informer.Informer().HasSynced,
-		workqueue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "SnapshotGroups"),
+		workqueue: workqueue.NewNamedRateLimitingQueue(getRateLimiter(), "SnapshotGroups"),
 	}
 	client.Informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(sg interface{}) {
