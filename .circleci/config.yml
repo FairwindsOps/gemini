@@ -18,11 +18,14 @@ jobs:
           GO111MODULE: "on"
     steps:
       - checkout
-      - run: go mod download && go mod verify
-      - run: go get github.com/markbates/pkger/cmd/pkger
-      - run: pkger
-      - run: go test -v ./... -coverprofile=coverage.txt -covermode=atomic
-      - run: bash <(curl -s https://codecov.io/bash)
+      - run: |
+          go get -u golang.org/x/lint/golint
+          go list ./... | grep -v types | xargs golint -set_exit_status
+          go list ./... | grep -v types | xargs go vet
+          go get -u gotest.tools/gotestsum
+          mkdir -p /tmp/test-results/go
+          gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
+          bash <(curl -s https://codecov.io/bash)
 
 workflows:
   version: 2
