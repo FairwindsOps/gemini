@@ -4,7 +4,7 @@ metadata:
   name: hackmd
   namespace: notepad
 spec:
-  claim:
+  persistentVolumeClaim:
     spec:
       accessModes:
         - ReadWriteOnce
@@ -23,7 +23,7 @@ metadata:
   name: hackmd-postgresql
   namespace: notepad
 spec:
-  claim:
+  persistentVolumeClaim:
     spec:
       accessModes:
         - ReadWriteOnce
