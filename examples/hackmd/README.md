@@ -51,7 +51,7 @@ EOF
 
 within 30 seconds or so, you should see a couple `VolumeSnapshots`:
 ```bash
-$ kubectl get volumesnapshot
+$ kubectl get volumesnapshot -n notepad
 NAME                           READYTOUSE   SOURCEPVC                  SOURCESNAPSHOTCONTENT   RESTORESIZE   SNAPSHOTCLASS      SNAPSHOTCONTENT                                    CREATIONTIME   AGE
 hackmd-1594929306              true         hackmd                                             2Gi           do-block-storage   snapcontent-2dac493e-116e-41b7-9ca2-cb797ac7c40b   17s            19s
 hackmd-postgresql-1594929307   true         data-hackmd-postgresql-0                           8Gi           do-block-storage   snapcontent-300e10a1-945a-483f-a461-9b073c853ddf   16s            18s
