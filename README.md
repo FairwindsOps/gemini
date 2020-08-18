@@ -24,6 +24,8 @@ backups with minimal downtime.
 
 **Want to learn more?** Reach out on [the Slack channel](https://fairwindscommunity.slack.com/messages/gemini) ([request invite](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g)), send an email to `opensource@fairwinds.com`, or join us for [office hours on Zoom](https://fairwindscommunity.slack.com/messages/office-hours)
 
+> Note: Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**.
+
 ## Installation
 The Gemini Helm chart will install both the CRD and the operator into your cluster
 
