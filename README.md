@@ -108,6 +108,27 @@ spec:
       keep: 3
 ```
 
+#### Snapshot Spec
+You can use the `spec.template` field to set the template for any `VolumeSnapshots` that get created,
+most notably the name of the [snapshot class](https://kubernetes.io/docs/concepts/storage/volume-snapshot-classes/)
+you want to use.
+
+```yaml
+apiVersion: gemini.fairwinds.com/v1beta1
+kind: SnapshotGroup
+metadata:
+  name: test-volume
+spec:
+  persistentVolumeClaim:
+    claimName: postgres
+  schedule:
+    - every: "10 minutes"
+      keep: 3
+  template:
+    spec:
+      volumeSnapshotClassName: test-snapshot-class      
+```
+
 ### Restore
 > Caution: you cannot alter a PVC without some downtime!
 
@@ -139,3 +160,7 @@ $ kubectl scale all --all --replicas=1
 ## End-to-End Example
 To see gemini working end-to-end, check out [the HackMD example](examples/hackmd)
 
+## Caveats
+* Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**
+* Be sure to test out both the backup and restore process to ensure Gemini is working properly
+* VolumeSnapshots simply grab the current state of the volume, without respect for things like in-flight database transactions. You may find you need to stop the application in order to get a consistently usable VolumeSnapshot.
