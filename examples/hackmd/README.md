@@ -120,6 +120,12 @@ This will:
 * delete the PVC
 * create a new PVC with the same name from your snapshot
 
+Note: If your PVC gets stuck in `Terminating`, this might be related to rate-limiting from the DO API (check [this issue](https://github.com/FairwindsOps/gemini/issues/29) for more info) You can force destroy the PVC by running:
+
+```bash
+kubectl -n notepad patch pvc data-hackmd-postgresql-0 -p '{"metadata":{"finalizers": []}}' --type=merge
+```
+
 Finally, we can scale back up:
 ```bash
 kubectl scale all --all --replicas=1 -n notepad
