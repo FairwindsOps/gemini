@@ -58,12 +58,11 @@ Before getting started with Gemini, it's a good idea to make sure you're able to
 ### Backup
 Gemini can schedule backups for an existing PVC, or create a new PVC to back up.
 
-#### Existing PVC
-> See the [extended example](/examples/hackmd/README.md)
+#### Schedules
 
-The following example schedules backups every 10 minutes for a pre-existing PVC named `postgres`.
+The `schedule` parameter tells Gemini how often to run backups, and how many historical backups to keep.
 
-The `schedule` parameter tells Gemini to always keep the last 3 backups, as well as
+For example, the following schedule tells Gemini to always keep the last 3 backups, as well as
 hourly, daily, monthly, and yearly backups.
 
 ```yaml
@@ -87,7 +86,39 @@ spec:
       keep: 1
 ```
 
-#### New PVC
+Note that `keep` specifies how many historical backups you want, _in addition_ to the most recent backup.
+This way the schedule
+```yaml
+- every: 10 minutes
+  keep: 3
+```
+will always give you _at least_ 30 minutes of backup coverage. But you will see four snapshots at any given time.
+E.g. right after a new snapshot is created, you'll see backups for
+* 0m ago
+* 10m ago
+* 20m ago
+* 30m ago
+
+
+#### Using an Existing PVC
+> See the [extended example](/examples/hackmd/README.md)
+
+The following example schedules backups every 10 minutes for a pre-existing PVC named `postgres`.
+
+```yaml
+apiVersion: gemini.fairwinds.com/v1beta1
+kind: SnapshotGroup
+metadata:
+  name: test-volume
+spec:
+  persistentVolumeClaim:
+    claimName: postgres
+  schedule:
+    - every: 10 minutes
+      keep: 3
+```
+
+#### Creating a New PVC
 You can also specify an entire PVC spec inside the SnapshotGroup if you'd like Gemini to create
 the PVC for you.
 ```yaml
@@ -107,6 +138,8 @@ spec:
     - every: 10 minutes
       keep: 3
 ```
+
+The PVC will have the same name as the SnapshotGroup, (in this example, `test-volume`)
 
 #### Snapshot Spec
 You can use the `spec.template` field to set the template for any `VolumeSnapshots` that get created,
