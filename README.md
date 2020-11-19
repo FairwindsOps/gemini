@@ -62,8 +62,8 @@ Gemini can schedule backups for an existing PVC, or create a new PVC to back up.
 
 The `schedule` parameter tells Gemini how often to run backups, and how many historical backups to keep.
 
-For example, the following schedule tells Gemini to always keep the last 3 backups, as well as
-hourly, daily, monthly, and yearly backups.
+For example, the following schedule tells Gemini to create new backups every 10 minutes,
+always keep the last 3 backups, and keep historical hourly, daily, monthly, and yearly backups.
 
 ```yaml
 apiVersion: gemini.fairwinds.com/v1beta1
