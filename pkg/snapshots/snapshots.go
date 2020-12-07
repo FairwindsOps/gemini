@@ -34,11 +34,12 @@ import (
 
 // GeminiSnapshot represents a VolumeSnapshot created by Gemini
 type GeminiSnapshot struct {
-	Namespace string
-	Name      string
-	Intervals []string
-	Timestamp time.Time
-	Restore   string
+	Namespace      string
+	Name           string
+	Intervals      []string
+	Timestamp      time.Time
+	Restore        string
+	VolumeSnapshot *snapshotsv1.VolumeSnapshot
 }
 
 // ListSnapshots returns all snapshots associated with a particular SnapshotGroup
@@ -72,12 +73,17 @@ func ListSnapshots(sg *snapshotgroup.SnapshotGroup) ([]GeminiSnapshot, error) {
 		if intervalsStr != "" {
 			intervals = strings.Split(intervalsStr, intervalsSeparator)
 		}
+		parsed, err := parseSnapshot(&snapshot)
+		if err != nil {
+			return nil, err
+		}
 		GeminiSnapshots = append(GeminiSnapshots, GeminiSnapshot{
-			Namespace: snapshotMeta.GetNamespace(),
-			Name:      snapshotMeta.GetName(),
-			Timestamp: time.Unix(int64(timestamp), 0),
-			Intervals: intervals,
-			Restore:   annotations[RestoreAnnotation],
+			Namespace:      snapshotMeta.GetNamespace(),
+			Name:           snapshotMeta.GetName(),
+			Timestamp:      time.Unix(int64(timestamp), 0),
+			Intervals:      intervals,
+			Restore:        annotations[RestoreAnnotation],
+			VolumeSnapshot: parsed,
 		})
 	}
 	sort.Slice(GeminiSnapshots, func(i, j int) bool {
@@ -86,6 +92,7 @@ func ListSnapshots(sg *snapshotgroup.SnapshotGroup) ([]GeminiSnapshot, error) {
 	return GeminiSnapshots, nil
 }
 
+// GetSnapshot returns a VolumeSnapshot
 func GetSnapshot(namespace, name string) (*snapshotsv1.VolumeSnapshot, error) {
 	client := kube.GetClient()
 	snapClient := client.SnapshotClient.Namespace(namespace)
@@ -179,7 +186,7 @@ func createSnapshotForRestore(sg *snapshotgroup.SnapshotGroup) (*snapshotsv1.Vol
 	for _, snapshot := range existing {
 		if snapshot.Restore == restore {
 			klog.V(5).Infof("%s/%s: restore snapshot already exists for timestamp %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restore)
-			return nil, nil
+			return snapshot.VolumeSnapshot, nil
 		}
 	}
 	klog.V(5).Infof("%s/%s: creating snapshot for restore %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restore)
