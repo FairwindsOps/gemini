@@ -16,7 +16,6 @@ package controller
 
 import (
 	"context"
-	//"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -56,7 +55,9 @@ func newSnapshotGroup(name, namespace string) *snapshotgroup.SnapshotGroup {
 
 func newTestController() (*Controller, *kube.Client) {
 	kube.SetFakeClient()
-	return NewController(), kube.GetClient()
+	ctrl := NewController()
+	ctrl.snapshotReadyTimeoutSeconds = 1
+	return ctrl, kube.GetClient()
 }
 
 func TestControllerQueue(t *testing.T) {

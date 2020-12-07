@@ -16,6 +16,7 @@ package snapshots
 
 import (
 	"encoding/json"
+	"errors"
 	"sort"
 	"strconv"
 	"strings"
@@ -85,8 +86,28 @@ func ListSnapshots(sg *snapshotgroup.SnapshotGroup) ([]GeminiSnapshot, error) {
 	return GeminiSnapshots, nil
 }
 
+func GetSnapshot(namespace, name string) (*snapshotsv1.VolumeSnapshot, error) {
+	client := kube.GetClient()
+	snapClient := client.SnapshotClient.Namespace(namespace)
+	snapUnst, err := snapClient.Get(name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return parseSnapshot(snapUnst)
+}
+
+func parseSnapshot(unst *unstructured.Unstructured) (*snapshotsv1.VolumeSnapshot, error) {
+	b, err := json.Marshal(unst)
+	if err != nil {
+		return nil, err
+	}
+	snap := snapshotsv1.VolumeSnapshot{}
+	err = json.Unmarshal(b, &snap)
+	return &snap, err
+}
+
 // createSnapshot creates a new snappshot for a given SnapshotGroup
-func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]string) error {
+func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]string) (*snapshotsv1.VolumeSnapshot, error) {
 	timestamp := strconv.Itoa(int(time.Now().Unix()))
 	annotations[TimestampAnnotation] = timestamp
 	annotations[managedByAnnotation] = managerName
@@ -106,14 +127,14 @@ func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]stri
 
 	marshaled, err := json.Marshal(snapshot)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	unst := unstructured.Unstructured{
 		Object: map[string]interface{}{},
 	}
 	err = json.Unmarshal(marshaled, &unst.Object)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	client := kube.GetClient()
 	unst.Object["kind"] = "VolumeSnapshot"
@@ -131,13 +152,16 @@ func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]stri
 	}
 
 	snapClient := client.SnapshotClient.Namespace(snapshot.ObjectMeta.Namespace)
-	_, err = snapClient.Create(&unst, metav1.CreateOptions{})
-	return err
+	snap, err := snapClient.Create(&unst, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return parseSnapshot(snap)
 }
 
-func createSnapshotForIntervals(sg *snapshotgroup.SnapshotGroup, intervals []string) error {
+func createSnapshotForIntervals(sg *snapshotgroup.SnapshotGroup, intervals []string) (*snapshotsv1.VolumeSnapshot, error) {
 	if len(intervals) == 0 {
-		return nil
+		return nil, nil
 	}
 	klog.V(5).Infof("%s/%s: creating snapshot for intervals %v", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, intervals)
 	annotations := map[string]string{
@@ -146,16 +170,16 @@ func createSnapshotForIntervals(sg *snapshotgroup.SnapshotGroup, intervals []str
 	return createSnapshot(sg, annotations)
 }
 
-func createSnapshotForRestore(sg *snapshotgroup.SnapshotGroup) error {
+func createSnapshotForRestore(sg *snapshotgroup.SnapshotGroup) (*snapshotsv1.VolumeSnapshot, error) {
 	restore := sg.ObjectMeta.Annotations[RestoreAnnotation]
 	existing, err := ListSnapshots(sg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	for _, snapshot := range existing {
 		if snapshot.Restore == restore {
 			klog.V(5).Infof("%s/%s: snapshot already exists for timestamp %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restore)
-			return nil
+			return nil, nil
 		}
 	}
 	klog.V(5).Infof("%s/%s: creating snapshot for restore %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restore)
@@ -177,4 +201,22 @@ func deleteSnapshots(toDelete []GeminiSnapshot) error {
 		klog.V(5).Infof("Deleted snapshot %s/%s", snapshot.Namespace, snapshot.Name)
 	}
 	return nil
+}
+
+func waitUntilSnapshotReady(namespace, name string, readyTimeoutSeconds int) (*snapshotsv1.VolumeSnapshot, error) {
+	timeout := time.After(time.Duration(readyTimeoutSeconds) * time.Second)
+	tick := time.Tick(time.Second)
+	for {
+		select {
+		case <-timeout:
+			return nil, errors.New("timed out")
+		case <-tick:
+			snapshot, err := GetSnapshot(namespace, name)
+			if err != nil {
+				return nil, err
+			} else if snapshot != nil && snapshot.Status != nil && snapshot.Status.ReadyToUse != nil && *snapshot.Status.ReadyToUse {
+				return snapshot, nil
+			}
+		}
+	}
 }

@@ -17,7 +17,6 @@ package snapshots
 import (
 	"context"
 	"fmt"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
@@ -65,7 +64,7 @@ func ReconcileBackupsForSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 	}
 	klog.Infof("%s/%s: deleted %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toDelete))
 
-	err = createSnapshotForIntervals(sg, toCreate)
+	_, err = createSnapshotForIntervals(sg, toCreate)
 	if err != nil {
 		return err
 	}
@@ -75,19 +74,22 @@ func ReconcileBackupsForSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 }
 
 // RestoreSnapshotGroup restores the PV to a particular snapshot
-func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
+func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup, waitForRestoreSeconds int) error {
 	restorePoint := sg.ObjectMeta.Annotations[RestoreAnnotation]
 	if restorePoint == "" {
 		err := fmt.Errorf("%s/%s: has invalid restore annotation %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
 		return err
 	}
 	klog.Infof("%s/%s: restoring to %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
-	err := createSnapshotForRestore(sg)
+	snap, err := createSnapshotForRestore(sg)
 	if err != nil {
 		return err
 	}
-	// FIXME: wait until the snapshot is ready
-	time.Sleep(10 * time.Second)
+	_, err = waitUntilSnapshotReady(snap.ObjectMeta.Namespace, snap.ObjectMeta.Name, waitForRestoreSeconds)
+	if err != nil {
+		klog.Warningf("%s/%s: failed to create failsafe snapshot before restore - %v", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, err)
+		klog.Warningf("%s/%s: proceeding with restore anyway", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	}
 	err = restorePVC(sg)
 	if err != nil {
 		return err
