@@ -80,6 +80,16 @@ func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup, waitForRestoreSeconds
 		err := fmt.Errorf("%s/%s: has an empty restore annotation", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 		return err
 	}
+	toScale, err := parseScaleAnnotation(sg.ObjectMeta.Annotations[ScaleAnnotation])
+	if err != nil {
+		klog.Errorf("%s/%s: has invalid scale annotation %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, sg.ObjectMeta.Annotations[ScaleAnnotation])
+		return err
+	}
+	err = scaleDown(sg.ObjectMeta.Namespace, toScale)
+	if err != nil {
+		klog.Errorf("%s/%s: failed to scale down before restore - %v", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, err)
+		return err
+	}
 	klog.Infof("%s/%s: restoring to %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
 	snap, err := createSnapshotForRestore(sg)
 	if err != nil {
@@ -94,6 +104,11 @@ func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup, waitForRestoreSeconds
 	err = restorePVC(sg)
 	if err != nil {
 		klog.Warningf("%s/%s: failed to restore PVC - %v", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, err)
+		return err
+	}
+	err = scaleUp(sg.ObjectMeta.Namespace, toScale)
+	if err != nil {
+		klog.Errorf("%s/%s: failed to scale up after restore - %v", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, err)
 		return err
 	}
 	return nil

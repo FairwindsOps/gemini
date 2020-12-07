@@ -26,6 +26,9 @@ const TimestampAnnotation = "gemini.fairwinds.com/timestamp"
 // RestoreAnnotation contains the restore point of the SnapshotGroup
 const RestoreAnnotation = "gemini.fairwinds.com/restore"
 
+// ScaleAnnotation contains the items to scale during backup/restore
+const ScaleAnnotation = "gemini.fairwinds.com/scale"
+
 const managedByAnnotation = "app.kubernetes.io/managed-by"
 const managerName = "gemini"
 const intervalsSeparator = ", "

@@ -20,8 +20,12 @@ import (
 	snapshotsFake "github.com/kubernetes-csi/external-snapshotter/pkg/client/clientset/versioned/fake"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	dynamicFake "k8s.io/client-go/dynamic/fake"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
+	restFake "k8s.io/client-go/rest/fake"
+	"k8s.io/client-go/restmapper"
+	"k8s.io/client-go/scale"
 
 	snapshotGroupsFake "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/clientset/versioned/fake"
 	snapshotGroupExternalVersions "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/informers/externalversions"
@@ -44,12 +48,26 @@ func createFakeClient() *Client {
 	informerFactory := snapshotGroupExternalVersions.NewSharedInformerFactory(snapshotGroupClientSet, noResync())
 	informer := informerFactory.Snapshotgroup().V1beta1().SnapshotGroups()
 
-	dynamic := dynamicFake.NewSimpleDynamicClient(k8sruntime.NewScheme())
-	snapshotClient := dynamic.Resource(schema.GroupVersionResource{
+	dynamicClient := dynamicFake.NewSimpleDynamicClient(k8sruntime.NewScheme())
+	snapshotClient := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    VolumeSnapshotGroupName,
 		Version:  "v1beta1",
 		Resource: VolumeSnapshotKind,
 	})
+
+	resources, err := restmapper.GetAPIGroupResources(k8s.Discovery())
+	if err != nil {
+		panic(err)
+	}
+	restMapper := restmapper.NewDiscoveryRESTMapper(resources)
+	scaleKindResolver := scale.NewDiscoveryScaleKindResolver(
+		k8s.Discovery(),
+	)
+	scaleClient := scale.New(
+		&restFake.RESTClient{}, restMapper,
+		dynamic.LegacyAPIPathResolverFunc,
+		scaleKindResolver,
+	)
 
 	return &Client{
 		K8s:                 k8s,
@@ -57,5 +75,6 @@ func createFakeClient() *Client {
 		InformerFactory:     informerFactory,
 		SnapshotClient:      snapshotClient,
 		SnapshotGroupClient: snapshotGroupClientSet.SnapshotgroupV1beta1(),
+		ScaleClient:         scaleClient,
 	}
 }

@@ -23,8 +23,12 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	// Import known auth providers
+	//apimeta "k8s.io/apimachinery/pkg/api/meta"
+	//"k8s.io/client-go/discovery"
+	//discocache "k8s.io/client-go/discovery/cached"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/restmapper"
+	"k8s.io/client-go/scale"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	snapshotgroupv1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
@@ -49,6 +53,7 @@ type Client struct {
 	SnapshotClient        dynamic.NamespaceableResourceInterface
 	SnapshotGroupClient   snapshotgroupInterface.SnapshotgroupV1beta1Interface
 	VolumeSnapshotVersion string
+	ScaleClient           scale.ScalesGetter
 }
 
 var singleton *Client
@@ -87,6 +92,26 @@ func createClient() *Client {
 		panic(err)
 	}
 	restMapper := restmapper.NewDiscoveryRESTMapper(resources)
+
+	/*
+		cachedDiscovery := discocache.NewMemCacheClient(k8s.Discovery())
+		restMapper := discovery.NewDeferredDiscoveryRESTMapper(
+			cachedDiscovery,
+			apimeta.InterfacesForUnstructured,
+		)
+	*/
+	scaleKindResolver := scale.NewDiscoveryScaleKindResolver(
+		k8s.Discovery(),
+	)
+	scaleClient, err := scale.NewForConfig(
+		kubeConf, restMapper,
+		dynamic.LegacyAPIPathResolverFunc,
+		scaleKindResolver,
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	snapshotCRD, err := extClientSet.ApiextensionsV1beta1().CustomResourceDefinitions().Get("volumesnapshots."+VolumeSnapshotGroupName, metav1.GetOptions{})
 	if err != nil {
 		panic(err)
@@ -113,6 +138,7 @@ func createClient() *Client {
 		InformerFactory:       informerFactory,
 		SnapshotClient:        snapshotClient,
 		SnapshotGroupClient:   sgClientSet.SnapshotgroupV1beta1(),
+		ScaleClient:           scaleClient,
 		VolumeSnapshotVersion: VolumeSnapshotGroupName + "/" + snapshotCRD.Spec.Version,
 	}
 }
