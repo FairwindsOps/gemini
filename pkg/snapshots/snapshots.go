@@ -178,7 +178,7 @@ func createSnapshotForRestore(sg *snapshotgroup.SnapshotGroup) (*snapshotsv1.Vol
 	}
 	for _, snapshot := range existing {
 		if snapshot.Restore == restore {
-			klog.V(5).Infof("%s/%s: snapshot already exists for timestamp %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restore)
+			klog.V(5).Infof("%s/%s: restore snapshot already exists for timestamp %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restore)
 			return nil, nil
 		}
 	}

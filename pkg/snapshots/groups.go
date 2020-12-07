@@ -83,6 +83,7 @@ func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup, waitForRestoreSeconds
 	klog.Infof("%s/%s: restoring to %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
 	snap, err := createSnapshotForRestore(sg)
 	if err != nil {
+		klog.Errorf("%s/%s: could not create failsafe snapshot before restore - %v", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, err)
 		return err
 	}
 	_, err = waitUntilSnapshotReady(snap.ObjectMeta.Namespace, snap.ObjectMeta.Name, waitForRestoreSeconds)
