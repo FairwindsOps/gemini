@@ -224,15 +224,14 @@ func waitUntilSnapshotReady(namespace, name string, readyTimeoutSeconds int) (*G
 			snapshot, err := GetSnapshot(namespace, name)
 			if err != nil {
 				return nil, err
-			} else {
-				isReady := snapshot != nil &&
-					snapshot.VolumeSnapshot != nil &&
-					snapshot.VolumeSnapshot.Status != nil &&
-					snapshot.VolumeSnapshot.Status.ReadyToUse != nil &&
-					*snapshot.VolumeSnapshot.Status.ReadyToUse
-				if isReady {
-					return snapshot, nil
-				}
+			}
+			isReady := snapshot != nil &&
+				snapshot.VolumeSnapshot != nil &&
+				snapshot.VolumeSnapshot.Status != nil &&
+				snapshot.VolumeSnapshot.Status.ReadyToUse != nil &&
+				*snapshot.VolumeSnapshot.Status.ReadyToUse
+			if isReady {
+				return snapshot, nil
 			}
 		}
 	}
