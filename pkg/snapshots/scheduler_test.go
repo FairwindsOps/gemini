@@ -29,24 +29,24 @@ func TestBasicSchedule(t *testing.T) {
 	}
 	start := time.Now().Add(time.Minute * -5)
 
-	existing := []GeminiSnapshot{
-		GeminiSnapshot{
+	existing := []*GeminiSnapshot{
+		&GeminiSnapshot{
 			Intervals: []string{"minute"},
 			Timestamp: start.Add(time.Minute * 4),
 		},
-		GeminiSnapshot{
+		&GeminiSnapshot{
 			Intervals: []string{"minute"},
 			Timestamp: start.Add(time.Minute * 3),
 		},
-		GeminiSnapshot{
+		&GeminiSnapshot{
 			Intervals: []string{"minute"},
 			Timestamp: start.Add(time.Minute * 2),
 		},
-		GeminiSnapshot{
+		&GeminiSnapshot{
 			Intervals: []string{"minute"},
 			Timestamp: start.Add(time.Minute),
 		},
-		GeminiSnapshot{
+		&GeminiSnapshot{
 			Intervals: []string{"minute"},
 			Timestamp: start,
 		},

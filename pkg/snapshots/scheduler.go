@@ -35,7 +35,7 @@ var durations = map[string]time.Duration{
 	"year":  time.Hour * 24 * 365,
 }
 
-func getSnapshotChanges(schedules []snapshotgroup.SnapshotSchedule, snapshots []GeminiSnapshot) ([]string, []GeminiSnapshot, error) {
+func getSnapshotChanges(schedules []snapshotgroup.SnapshotSchedule, snapshots []*GeminiSnapshot) ([]string, []*GeminiSnapshot, error) {
 	numToKeepByInterval := map[string]int{}
 	numSnapshotsByInterval := map[string]int{}
 	for _, schedule := range schedules {
@@ -49,7 +49,7 @@ func getSnapshotChanges(schedules []snapshotgroup.SnapshotSchedule, snapshots []
 	}
 	now := time.Now().UTC()
 
-	toDelete := []GeminiSnapshot{}
+	toDelete := []*GeminiSnapshot{}
 	needsCreation := map[string]bool{}
 	for _, schedule := range schedules {
 		needsCreation[schedule.Every] = true

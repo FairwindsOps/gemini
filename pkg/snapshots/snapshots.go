@@ -43,15 +43,15 @@ type GeminiSnapshot struct {
 }
 
 // ListSnapshots returns all snapshots associated with a particular SnapshotGroup
-func ListSnapshots(sg *snapshotgroup.SnapshotGroup) ([]GeminiSnapshot, error) {
+func ListSnapshots(sg *snapshotgroup.SnapshotGroup) ([]*GeminiSnapshot, error) {
 	client := kube.GetClient()
 	snapshots, err := client.SnapshotClient.Namespace(sg.ObjectMeta.Namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	GeminiSnapshots := []GeminiSnapshot{}
-	for _, snapshot := range snapshots.Items {
-		snapshotMeta, err := meta.Accessor(&snapshot)
+	geminiSnapshots := []*GeminiSnapshot{}
+	for _, snapshotUnst := range snapshots.Items {
+		snapshotMeta, err := meta.Accessor(&snapshotUnst)
 		if err != nil {
 			return nil, err
 		}
@@ -62,38 +62,20 @@ func ListSnapshots(sg *snapshotgroup.SnapshotGroup) ([]GeminiSnapshot, error) {
 		if annotations[GroupNameAnnotation] != sg.ObjectMeta.Name {
 			continue
 		}
-		timestampStr := annotations[TimestampAnnotation]
-		timestamp, err := strconv.Atoi(timestampStr)
-		if err != nil {
-			klog.Errorf("%s/%s: failed to parse unix timestamp %s for %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, timestampStr, snapshotMeta.GetName())
-			continue
-		}
-		intervals := []string{}
-		intervalsStr := annotations[IntervalsAnnotation]
-		if intervalsStr != "" {
-			intervals = strings.Split(intervalsStr, intervalsSeparator)
-		}
-		parsed, err := parseSnapshot(&snapshot)
+		snapshot, err := parseSnapshot(&snapshotUnst)
 		if err != nil {
 			return nil, err
 		}
-		GeminiSnapshots = append(GeminiSnapshots, GeminiSnapshot{
-			Namespace:      snapshotMeta.GetNamespace(),
-			Name:           snapshotMeta.GetName(),
-			Timestamp:      time.Unix(int64(timestamp), 0),
-			Intervals:      intervals,
-			Restore:        annotations[RestoreAnnotation],
-			VolumeSnapshot: parsed,
-		})
+		geminiSnapshots = append(geminiSnapshots, snapshot)
 	}
-	sort.Slice(GeminiSnapshots, func(i, j int) bool {
-		return GeminiSnapshots[j].Timestamp.Before(GeminiSnapshots[i].Timestamp)
+	sort.Slice(geminiSnapshots, func(i, j int) bool {
+		return geminiSnapshots[j].Timestamp.Before(geminiSnapshots[i].Timestamp)
 	})
-	return GeminiSnapshots, nil
+	return geminiSnapshots, nil
 }
 
 // GetSnapshot returns a VolumeSnapshot
-func GetSnapshot(namespace, name string) (*snapshotsv1.VolumeSnapshot, error) {
+func GetSnapshot(namespace, name string) (*GeminiSnapshot, error) {
 	client := kube.GetClient()
 	snapClient := client.SnapshotClient.Namespace(namespace)
 	snapUnst, err := snapClient.Get(name, metav1.GetOptions{})
@@ -103,18 +85,39 @@ func GetSnapshot(namespace, name string) (*snapshotsv1.VolumeSnapshot, error) {
 	return parseSnapshot(snapUnst)
 }
 
-func parseSnapshot(unst *unstructured.Unstructured) (*snapshotsv1.VolumeSnapshot, error) {
+func parseSnapshot(unst *unstructured.Unstructured) (*GeminiSnapshot, error) {
 	b, err := json.Marshal(unst)
 	if err != nil {
 		return nil, err
 	}
 	snap := snapshotsv1.VolumeSnapshot{}
 	err = json.Unmarshal(b, &snap)
-	return &snap, err
+	if err != nil {
+		return nil, err
+	}
+	timestampStr := snap.ObjectMeta.Annotations[TimestampAnnotation]
+	timestamp, err := strconv.Atoi(timestampStr)
+	if err != nil {
+		klog.Errorf("%s/%s: failed to parse unix timestamp %s", snap.ObjectMeta.Namespace, snap.ObjectMeta.Name, timestampStr)
+		return nil, err
+	}
+	intervals := []string{}
+	intervalsStr := snap.ObjectMeta.Annotations[IntervalsAnnotation]
+	if intervalsStr != "" {
+		intervals = strings.Split(intervalsStr, intervalsSeparator)
+	}
+	return &GeminiSnapshot{
+		Namespace:      snap.ObjectMeta.Namespace,
+		Name:           snap.ObjectMeta.Name,
+		Timestamp:      time.Unix(int64(timestamp), 0),
+		Intervals:      intervals,
+		Restore:        snap.ObjectMeta.Annotations[RestoreAnnotation],
+		VolumeSnapshot: &snap,
+	}, nil
 }
 
 // createSnapshot creates a new snappshot for a given SnapshotGroup
-func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]string) (*snapshotsv1.VolumeSnapshot, error) {
+func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]string) (*GeminiSnapshot, error) {
 	timestamp := strconv.Itoa(int(time.Now().Unix()))
 	annotations[TimestampAnnotation] = timestamp
 	annotations[managedByAnnotation] = managerName
@@ -166,7 +169,7 @@ func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]stri
 	return parseSnapshot(snap)
 }
 
-func createSnapshotForIntervals(sg *snapshotgroup.SnapshotGroup, intervals []string) (*snapshotsv1.VolumeSnapshot, error) {
+func createSnapshotForIntervals(sg *snapshotgroup.SnapshotGroup, intervals []string) (*GeminiSnapshot, error) {
 	if len(intervals) == 0 {
 		return nil, nil
 	}
@@ -177,7 +180,7 @@ func createSnapshotForIntervals(sg *snapshotgroup.SnapshotGroup, intervals []str
 	return createSnapshot(sg, annotations)
 }
 
-func createSnapshotForRestore(sg *snapshotgroup.SnapshotGroup) (*snapshotsv1.VolumeSnapshot, error) {
+func createSnapshotForRestore(sg *snapshotgroup.SnapshotGroup) (*GeminiSnapshot, error) {
 	restore := sg.ObjectMeta.Annotations[RestoreAnnotation]
 	existing, err := ListSnapshots(sg)
 	if err != nil {
@@ -186,7 +189,7 @@ func createSnapshotForRestore(sg *snapshotgroup.SnapshotGroup) (*snapshotsv1.Vol
 	for _, snapshot := range existing {
 		if snapshot.Restore == restore {
 			klog.V(5).Infof("%s/%s: restore snapshot already exists for timestamp %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restore)
-			return snapshot.VolumeSnapshot, nil
+			return snapshot, nil
 		}
 	}
 	klog.V(5).Infof("%s/%s: creating snapshot for restore %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restore)
@@ -196,7 +199,7 @@ func createSnapshotForRestore(sg *snapshotgroup.SnapshotGroup) (*snapshotsv1.Vol
 	return createSnapshot(sg, annotations)
 }
 
-func deleteSnapshots(toDelete []GeminiSnapshot) error {
+func deleteSnapshots(toDelete []*GeminiSnapshot) error {
 	klog.V(5).Infof("Deleting %d expired snapshots", len(toDelete))
 	client := kube.GetClient()
 	for _, snapshot := range toDelete {
@@ -210,7 +213,7 @@ func deleteSnapshots(toDelete []GeminiSnapshot) error {
 	return nil
 }
 
-func waitUntilSnapshotReady(namespace, name string, readyTimeoutSeconds int) (*snapshotsv1.VolumeSnapshot, error) {
+func waitUntilSnapshotReady(namespace, name string, readyTimeoutSeconds int) (*GeminiSnapshot, error) {
 	timeout := time.After(time.Duration(readyTimeoutSeconds) * time.Second)
 	tick := time.Tick(time.Second)
 	for {
@@ -221,8 +224,15 @@ func waitUntilSnapshotReady(namespace, name string, readyTimeoutSeconds int) (*s
 			snapshot, err := GetSnapshot(namespace, name)
 			if err != nil {
 				return nil, err
-			} else if snapshot != nil && snapshot.Status != nil && snapshot.Status.ReadyToUse != nil && *snapshot.Status.ReadyToUse {
-				return snapshot, nil
+			} else {
+				isReady := snapshot != nil &&
+					snapshot.VolumeSnapshot != nil &&
+					snapshot.VolumeSnapshot.Status != nil &&
+					snapshot.VolumeSnapshot.Status.ReadyToUse != nil &&
+					*snapshot.VolumeSnapshot.Status.ReadyToUse
+				if isReady {
+					return snapshot, nil
+				}
 			}
 		}
 	}
