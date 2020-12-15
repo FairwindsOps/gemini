@@ -32,6 +32,8 @@ import (
 	listers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/listers/snapshotgroup/v1beta1"
 )
 
+const defaultSnapshotReadyTimeoutSeconds = 60
+
 // Controller represents a SnapshotGroup controller
 type Controller struct {
 	client *kube.Client
@@ -40,6 +42,8 @@ type Controller struct {
 	sgSynced cache.InformerSynced
 
 	workqueue workqueue.RateLimitingInterface
+
+	snapshotReadyTimeoutSeconds int
 }
 
 type task int
@@ -71,9 +75,10 @@ func getRateLimiter() workqueue.RateLimiter {
 func NewController() *Controller {
 	client := kube.GetClient()
 	controller := &Controller{
-		sgLister:  client.Informer.Lister(),
-		sgSynced:  client.Informer.Informer().HasSynced,
-		workqueue: workqueue.NewNamedRateLimitingQueue(getRateLimiter(), "SnapshotGroups"),
+		sgLister:                    client.Informer.Lister(),
+		sgSynced:                    client.Informer.Informer().HasSynced,
+		workqueue:                   workqueue.NewNamedRateLimitingQueue(getRateLimiter(), "SnapshotGroups"),
+		snapshotReadyTimeoutSeconds: defaultSnapshotReadyTimeoutSeconds,
 	}
 	client.Informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(sg interface{}) {
@@ -155,7 +160,7 @@ func (c *Controller) syncHandler(w workItem) error {
 	if w.task == backupTask {
 		err = snapshots.ReconcileBackupsForSnapshotGroup(w.snapshotGroup)
 	} else if w.task == restoreTask {
-		err = snapshots.RestoreSnapshotGroup(w.snapshotGroup)
+		err = snapshots.RestoreSnapshotGroup(w.snapshotGroup, c.snapshotReadyTimeoutSeconds)
 	} else if w.task == deleteTask {
 		err = snapshots.OnSnapshotGroupDelete(w.snapshotGroup)
 	}
