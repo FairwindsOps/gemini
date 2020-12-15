@@ -77,7 +77,7 @@ func ReconcileBackupsForSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup, waitForRestoreSeconds int) error {
 	restorePoint := sg.ObjectMeta.Annotations[RestoreAnnotation]
 	if restorePoint == "" {
-		err := fmt.Errorf("%s/%s: has invalid restore annotation %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
+		err := fmt.Errorf("%s/%s: has an empty restore annotation", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 		return err
 	}
 	klog.Infof("%s/%s: restoring to %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
@@ -93,6 +93,7 @@ func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup, waitForRestoreSeconds
 	}
 	err = restorePVC(sg)
 	if err != nil {
+		klog.Warningf("%s/%s: failed to restore PVC - %v", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, err)
 		return err
 	}
 	return nil
