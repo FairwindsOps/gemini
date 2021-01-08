@@ -11,8 +11,8 @@ import (
 )
 
 type scaleItem struct {
-	resource schema.GroupResource
-	name     string
+	Resource schema.GroupResource `yaml:"resource"`
+	Name     string               `yaml:"name"`
 	scale    int32
 }
 
@@ -29,7 +29,7 @@ func scaleDown(namespace string, items []scaleItem) error {
 	client := kube.GetClient()
 	scaler := client.ScaleClient.Scales(namespace)
 	for _, item := range items {
-		current, err := scaler.Get(item.resource, item.name)
+		current, err := scaler.Get(item.Resource, item.Name)
 		if err != nil {
 			return err
 		}
@@ -57,13 +57,13 @@ func scaleTo(namespace string, item scaleItem, amt int32) error {
 	scaler := client.ScaleClient.Scales(namespace)
 	newScale := autoscale.Scale{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      item.name,
+			Name:      item.Name,
 			Namespace: namespace,
 		},
 		Spec: autoscale.ScaleSpec{
 			Replicas: amt,
 		},
 	}
-	_, err := scaler.Update(item.resource, &newScale)
+	_, err := scaler.Update(item.Resource, &newScale)
 	return err
 }
