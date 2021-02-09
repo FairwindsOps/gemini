@@ -37,7 +37,7 @@ func CreateCustomResourceDefinition(namespace string, clientSet apiextensionscli
 						"spec": {
 							Type: "object",
 							Properties: map[string]apiextensionsv1beta1.JSONSchemaProps{
-								"persistenVolumeClaim": {
+								"persistentVolumeClaim": {
 									Type: "object",
 									Properties: map[string]apiextensionsv1beta1.JSONSchemaProps{
 										"claimName": {
