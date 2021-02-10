@@ -41,11 +41,11 @@ func CreateCustomResourceDefinition(namespace string, clientSet apiextensionscli
 									Type: "object",
 									Properties: map[string]apiextensionsv1beta1.JSONSchemaProps{
 										"claimName": {
-											Description: "PVC to backup",
+											Description: "PersistentVolumeClaim name to backup",
 											Type:        "string",
 										},
 										"spec": {
-											Description: "PVC spec to create and backup",
+											Description: "PersistentVolumeClaim spec to create and backup",
 											Type:        "object",
 										},
 									},
@@ -65,6 +65,15 @@ func CreateCustomResourceDefinition(namespace string, clientSet apiextensionscli
 													Type:        "integer",
 												},
 											},
+										},
+									},
+								},
+								"template": {
+									Type: "object",
+									Properties: map[string]apiextensionsv1beta1.JSONSchemaProps{
+										"spec": {
+											Description: "VolumeSnapshot spec",
+											Type:        "object",
 										},
 									},
 								},
