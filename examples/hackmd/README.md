@@ -1,4 +1,4 @@
-# Gemini Example: HackMD
+# Gemini Example: CodiMD
 > Note: this will not work in a KIND cluster. It has been tested on DigitalOcean.
 
 ### Install the controller
@@ -8,13 +8,14 @@ helm repo add fairwinds-stable https://charts.fairwinds.com/stable
 helm install gemini fairwinds-stable/gemini --namespace gemini
 ```
 
-### Install HackMD
+### Install CodiMD
 ```bash
 kubectl create ns notepad
-helm install hackmd stable/hackmd -n notepad --version "2.0.*" --set postgresql.postgresqlPassword=thisisnotasecret
+helm repo add codimd https://helm.codimd.dev/
+helm install codimd codimd/codimd -n notepad --version "2.0.*" --set postgresql.postgresqlPassword=thisisnotasecret
 ```
 
-This will create two PVCs, one for HackMD, and one for the Postgres instance that backs it.
+This will create two PVCs, one for CodiMD, and one for the Postgres instance that backs it.
 
 ### Set up the Backup Schedule
 ```bash
@@ -22,11 +23,11 @@ cat <<EOF | kubectl apply -f -
 apiVersion: gemini.fairwinds.com/v1beta1
 kind: SnapshotGroup
 metadata:
-  name: hackmd
+  name: codimd
   namespace: notepad
 spec:
   persistentVolumeClaim:
-    claimName: hackmd
+    claimName: codimd
   schedule:
     - every: "10 minutes"
       keep: 3
@@ -36,11 +37,11 @@ spec:
 apiVersion: gemini.fairwinds.com/v1beta1
 kind: SnapshotGroup
 metadata:
-  name: hackmd-postgresql
+  name: codimd-postgresql
   namespace: notepad
 spec:
   persistentVolumeClaim:
-    claimName: data-hackmd-postgresql-0
+    claimName: data-codimd-postgresql-0
   schedule:
     - every: "10 minutes"
       keep: 3
@@ -53,13 +54,13 @@ within 30 seconds or so, you should see a couple `VolumeSnapshots`:
 ```bash
 $ kubectl get volumesnapshot -n notepad
 NAME                           READYTOUSE   SOURCEPVC                  SOURCESNAPSHOTCONTENT   RESTORESIZE   SNAPSHOTCLASS      SNAPSHOTCONTENT                                    CREATIONTIME   AGE
-hackmd-1594929306              true         hackmd                                             2Gi           do-block-storage   snapcontent-2dac493e-116e-41b7-9ca2-cb797ac7c40b   17s            19s
-hackmd-postgresql-1594929307   true         data-hackmd-postgresql-0                           8Gi           do-block-storage   snapcontent-300e10a1-945a-483f-a461-9b073c853ddf   16s            18s
+codimd-1594929306              true         codimd                                             2Gi           do-block-storage   snapcontent-2dac493e-116e-41b7-9ca2-cb797ac7c40b   17s            19s
+codimd-postgresql-1594929307   true         data-codimd-postgresql-0                           8Gi           do-block-storage   snapcontent-300e10a1-945a-483f-a461-9b073c853ddf   16s            18s
 ```
 
 ### Create a document
 ```bash
-kubectl port-forward svc/hackmd 3000:3000 -n notepad
+kubectl port-forward svc/codimd 3000:3000 -n notepad
 ```
 
 Visit `localhost:3000` and create a new guest document. Enter some dummy text.
@@ -76,13 +77,13 @@ Within 30 seconds, you should see new snapshots appear. Make sure to wait until 
 ```bash
 $ kubectl get volumesnapshot -n notepad
 NAME                           READYTOUSE   SOURCEPVC                  SOURCESNAPSHOTCONTENT   RESTORESIZE   SNAPSHOTCLASS      SNAPSHOTCONTENT                                    CREATIONTIME   AGE
-hackmd-1594929516              true         hackmd                                             2Gi           do-block-storage   snapcontent-e75421c6-c4ca-4bbf-81f4-a2fb0706b957   5s             7s
-hackmd-postgresql-1594929517   true         data-hackmd-postgresql-0                           8Gi           do-block-storage   snapcontent-ad71c1f8-af7b-4cdc-85ba-e512a77095a3   4s             6s
+codimd-1594929516              true         codimd                                             2Gi           do-block-storage   snapcontent-e75421c6-c4ca-4bbf-81f4-a2fb0706b957   5s             7s
+codimd-postgresql-1594929517   true         data-codimd-postgresql-0                           8Gi           do-block-storage   snapcontent-ad71c1f8-af7b-4cdc-85ba-e512a77095a3   4s             6s
 ```
 
 ### Edit your document again
 ```bash
-kubectl port-forward svc/hackmd 3000:3000 -n notepad
+kubectl port-forward svc/codimd 3000:3000 -n notepad
 ```
 
 Go back to your document (if you lost it, you can find it again by going to
@@ -106,12 +107,12 @@ For example, here we'll use timestamp `1585945609`.
 ```bash
 $ kubectl get volumesnapshot -n notepad
 NAME                           AGE
-hackmd-1585945609              15s
-hackmd-postgresql-1585945609   15s
+codimd-1585945609              15s
+codimd-postgresql-1585945609   15s
 ```
 
 ```bash
-kubectl annotate snapshotgroup/hackmd-postgresql -n notepad --overwrite \
+kubectl annotate snapshotgroup/codimd-postgresql -n notepad --overwrite \
   "gemini.fairwinds.com/restore=1585945609"
 ```
 
@@ -123,7 +124,7 @@ This will:
 Note: If your PVC gets stuck in `Terminating`, this might be related to rate-limiting from the DO API (check [this issue](https://github.com/FairwindsOps/gemini/issues/29) for more info) You can force destroy the PVC by running:
 
 ```bash
-kubectl -n notepad patch pvc data-hackmd-postgresql-0 -p '{"metadata":{"finalizers": []}}' --type=merge
+kubectl -n notepad patch pvc data-codimd-postgresql-0 -p '{"metadata":{"finalizers": []}}' --type=merge
 ```
 
 Finally, we can scale back up:
@@ -133,6 +134,6 @@ kubectl scale all --all --replicas=1 -n notepad
 
 ### Verify the restore
 ```bash
-kubectl port-forward svc/hackmd 3000:3000 -n notepad
+kubectl port-forward svc/codimd 3000:3000 -n notepad
 ```
 Go back to your document. The second round of edits you made should be gone!
