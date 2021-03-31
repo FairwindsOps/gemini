@@ -30,6 +30,58 @@ func CreateCustomResourceDefinition(namespace string, clientSet apiextensionscli
 				Plural: Plural,
 				Kind:   reflect.TypeOf(SnapshotGroup{}).Name(),
 			},
+			Validation: &apiextensionsv1beta1.CustomResourceValidation{
+				OpenAPIV3Schema: &apiextensionsv1beta1.JSONSchemaProps{
+					Type: "object",
+					Properties: map[string]apiextensionsv1beta1.JSONSchemaProps{
+						"spec": {
+							Type: "object",
+							Properties: map[string]apiextensionsv1beta1.JSONSchemaProps{
+								"persistentVolumeClaim": {
+									Type: "object",
+									Properties: map[string]apiextensionsv1beta1.JSONSchemaProps{
+										"claimName": {
+											Description: "PersistentVolumeClaim name to backup",
+											Type:        "string",
+										},
+										"spec": {
+											Description: "PersistentVolumeClaim spec to create and backup",
+											Type:        "object",
+										},
+									},
+								},
+								"schedule": {
+									Type: "array",
+									Items: &apiextensionsv1beta1.JSONSchemaPropsOrArray{
+										Schema: &apiextensionsv1beta1.JSONSchemaProps{
+											Type: "object",
+											Properties: map[string]apiextensionsv1beta1.JSONSchemaProps{
+												"every": {
+													Description: "Interval for creating new backups",
+													Type:        "string",
+												},
+												"keep": {
+													Description: "Number of historical backups to keep",
+													Type:        "integer",
+												},
+											},
+										},
+									},
+								},
+								"template": {
+									Type: "object",
+									Properties: map[string]apiextensionsv1beta1.JSONSchemaProps{
+										"spec": {
+											Description: "VolumeSnapshot spec",
+											Type:        "object",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 	_, err := clientSet.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd)
