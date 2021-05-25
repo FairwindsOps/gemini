@@ -21,12 +21,12 @@ Gemini is a Kubernetes CRD and operator for managing `VolumeSnapshots`. This all
 to back up your `PersistentVolumes` on a regular schedule, retire old backups, and restore
 backups with minimal downtime.
 
+> Note: Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**.
+
 
 ## Join the Fairwinds Open Source Community
 
 The goal of the Fairwinds Community is to exchange ideas, influence the open source roadmap, and network with fellow Kubernetes users. [Chat with us on Slack](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g) or [join the user group](https://www.fairwinds.com/open-source-software-user-group) to get involved!
-
-> Note: Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**.
 
 ## Installation
 The Gemini Helm chart will install both the CRD and the operator into your cluster
