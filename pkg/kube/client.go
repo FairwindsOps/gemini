@@ -15,6 +15,7 @@
 package kube
 
 import (
+	"context"
 	"time"
 
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -22,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+
 	// Import known auth providers
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/restmapper"
@@ -87,7 +89,7 @@ func createClient() *Client {
 		panic(err)
 	}
 	restMapper := restmapper.NewDiscoveryRESTMapper(resources)
-	snapshotCRD, err := extClientSet.ApiextensionsV1beta1().CustomResourceDefinitions().Get("volumesnapshots."+VolumeSnapshotGroupName, metav1.GetOptions{})
+	snapshotCRD, err := extClientSet.ApiextensionsV1beta1().CustomResourceDefinitions().Get(context.TODO(), "volumesnapshots."+VolumeSnapshotGroupName, metav1.GetOptions{})
 	if err != nil {
 		panic(err)
 	}

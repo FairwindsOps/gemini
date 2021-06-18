@@ -94,7 +94,7 @@ func TestBackupHandler(t *testing.T) {
 	assert.Equal(t, []string{"1 second"}, snaps[0].Intervals)
 
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
-	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
+	pvc, err := pvcClient.Get(context.TODO(), sg.ObjectMeta.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, "gemini", pvc.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
 
@@ -151,7 +151,7 @@ func TestRestoreHandler(t *testing.T) {
 	assert.Equal(t, []string{"1 second"}, snaps[0].Intervals)
 
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
-	pvc, err := pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
+	pvc, err := pvcClient.Get(context.TODO(), sg.ObjectMeta.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, "gemini", pvc.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
 	assert.Equal(t, "", pvc.ObjectMeta.Annotations["gemini.fairwinds.com/restore"])
@@ -163,7 +163,7 @@ func TestRestoreHandler(t *testing.T) {
 	err = ctrl.syncHandler(event)
 	assert.NoError(t, err)
 
-	pvc, err = pvcClient.Get(sg.ObjectMeta.Name, metav1.GetOptions{})
+	pvc, err = pvcClient.Get(context.TODO(), sg.ObjectMeta.Name, metav1.GetOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, "gemini", pvc.ObjectMeta.Annotations["app.kubernetes.io/managed-by"])
 	assert.Equal(t, timestamp, pvc.ObjectMeta.Annotations["gemini.fairwinds.com/restore"])
@@ -202,10 +202,10 @@ func TestPreexistingPVC(t *testing.T) {
 		},
 	}
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(namespace)
-	_, err := pvcClient.Create(pvc)
+	_, err := pvcClient.Create(context.TODO(), pvc, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
-	pvcs, err := pvcClient.List(metav1.ListOptions{})
+	pvcs, err := pvcClient.List(context.TODO(), metav1.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(pvcs.Items))
 	existingPVC := pvcs.Items[0]
@@ -236,7 +236,7 @@ func TestPreexistingPVC(t *testing.T) {
 	assert.Equal(t, 1, len(snaps))
 	assert.Equal(t, []string{"1 second"}, snaps[0].Intervals)
 
-	pvcs, err = pvcClient.List(metav1.ListOptions{})
+	pvcs, err = pvcClient.List(context.TODO(), metav1.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(pvcs.Items))
 	existingPVC = pvcs.Items[0]
@@ -251,7 +251,7 @@ func TestPreexistingPVC(t *testing.T) {
 	err = ctrl.syncHandler(event)
 	assert.NoError(t, err)
 
-	pvcs, err = pvcClient.List(metav1.ListOptions{})
+	pvcs, err = pvcClient.List(context.TODO(), metav1.ListOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(pvcs.Items))
 	newPVC := pvcs.Items[0]
