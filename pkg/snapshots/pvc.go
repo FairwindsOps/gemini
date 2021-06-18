@@ -15,6 +15,7 @@
 package snapshots
 
 import (
+	"context"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
@@ -37,7 +38,7 @@ func getPVCName(sg *snapshotgroup.SnapshotGroup) string {
 func getPVC(sg *snapshotgroup.SnapshotGroup) (*corev1.PersistentVolumeClaim, error) {
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
-	pvc, err := pvcClient.Get(getPVCName(sg), metav1.GetOptions{})
+	pvc, err := pvcClient.Get(context.TODO(), getPVCName(sg), metav1.GetOptions{})
 	return pvc, err
 }
 
@@ -74,7 +75,7 @@ func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClai
 	}
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
-	return pvcClient.Create(pvc)
+	return pvcClient.Create(context.TODO(), pvc, metav1.CreateOptions{})
 }
 
 func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
@@ -104,5 +105,5 @@ func deletePVC(sg *snapshotgroup.SnapshotGroup) error {
 	klog.Infof("%s/%s: deleting PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
-	return pvcClient.Delete(name, &metav1.DeleteOptions{})
+	return pvcClient.Delete(context.TODO(), name, metav1.DeleteOptions{})
 }
