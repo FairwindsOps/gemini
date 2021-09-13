@@ -24,196 +24,17 @@ backups with minimal downtime.
 > Note: Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**.
 
 
+<!-- Begin boilerplate -->
 ## Join the Fairwinds Open Source Community
 
-The goal of the Fairwinds Community is to exchange ideas, influence the open source roadmap, and network with fellow Kubernetes users. [Chat with us on Slack](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g) or [join the user group](https://www.fairwinds.com/open-source-software-user-group) to get involved!
+The goal of the Fairwinds Community is to exchange ideas, influence the open source roadmap,
+and network with fellow Kubernetes users.
+[Chat with us on Slack](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g)
+[join the user group](https://www.fairwinds.com/open-source-software-user-group) to get involved!
 
-## Installation
-The Gemini Helm chart will install both the CRD and the operator into your cluster
-
-```bash
-kubectl create ns gemini
-helm repo add fairwinds-stable https://charts.fairwinds.com/stable
-helm install gemini fairwinds-stable/gemini --namespace gemini
-```
-
-### Prerequisites
-You'll need to have the `VolumeSnapshot` API available in your cluster. This API is in
-[beta as of Kubernetes 1.17](https://kubernetes.io/docs/concepts/storage/volume-snapshots/),
-and was introduced as alpha in 1.12.
-
-To check if your cluster has `VolumeSnapshots` available, you can run
-```bash
-kubectl api-resources | grep volumesnapshots
-```
-
-* To enable on v1.12-16, set the flag `--feature-gates=VolumeSnapshotDataSource=true` on the API server binary [source](https://kubernetes.io/blog/2018/10/09/introducing-volume-snapshot-alpha-for-kubernetes/#kubernetes-snapshots-requirements)
-* To enable VolumeSnapshots on kops, see our [instructions here](/examples/bash)
-* Depending on your environment, you may need to configure the VolumeSnapshot API as well as the CSI. Fortunately, some managed Kubernetes providers like DigitalOcean support VolumeSnapshots by default, even on older versions
-
-Before getting started with Gemini, it's a good idea to make sure you're able to
-[create a VolumeSnapshot manually](https://kubernetes.io/docs/concepts/storage/volume-snapshots/#volumesnapshots).
-
-
-## Usage
-
-### Backup
-Gemini can schedule backups for an existing PVC, or create a new PVC to back up.
-
-#### Schedules
-
-The `schedule` parameter tells Gemini how often to run backups, and how many historical backups to keep.
-
-For example, the following schedule tells Gemini to create a backup every day, keeping two weeks worth of history:
-```yaml
-apiVersion: gemini.fairwinds.com/v1beta1
-kind: SnapshotGroup
-metadata:
-  name: test-volume
-spec:
-  persistentVolumeClaim:
-    claimName: postgres
-  schedule:
-    - every: day
-      keep: 14
-```
-
-For a more complex example, Gemini can create new backups every 10 minutes,
-always keep the last 3 backups, and preserve historical hourly, daily, monthly, and yearly backups.
-
-```yaml
-apiVersion: gemini.fairwinds.com/v1beta1
-kind: SnapshotGroup
-metadata:
-  name: test-volume
-spec:
-  persistentVolumeClaim:
-    claimName: postgres
-  schedule:
-    - every: 10 minutes
-      keep: 3
-    - every: hour
-      keep: 1
-    - every: day
-      keep: 1
-    - every: month
-      keep: 1
-    - every: year
-      keep: 1
-```
-
-Note that `keep` specifies how many historical backups you want, _in addition_ to the most recent backup.
-This way the schedule
-```yaml
-- every: 10 minutes
-  keep: 3
-```
-will always give you _at least_ 30 minutes of backup coverage. But you will see four snapshots at any given time.
-E.g. right after a new snapshot is created, you'll see backups for
-* 0m ago
-* 10m ago
-* 20m ago
-* 30m ago
-
-
-#### Using an Existing PVC
-> See the [extended example](/examples/hackmd/README.md)
-
-The following example schedules backups every 10 minutes for a pre-existing PVC named `postgres`.
-
-```yaml
-apiVersion: gemini.fairwinds.com/v1beta1
-kind: SnapshotGroup
-metadata:
-  name: test-volume
-spec:
-  persistentVolumeClaim:
-    claimName: postgres
-  schedule:
-    - every: 10 minutes
-      keep: 3
-```
-
-#### Creating a New PVC
-You can also specify an entire PVC spec inside the SnapshotGroup if you'd like Gemini to create
-the PVC for you.
-```yaml
-apiVersion: gemini.fairwinds.com/v1beta1
-kind: SnapshotGroup
-metadata:
-  name: test-volume
-spec:
-  persistentVolumeClaim:
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 1Gi
-  schedule:
-    - every: 10 minutes
-      keep: 3
-```
-
-The PVC will have the same name as the SnapshotGroup, (in this example, `test-volume`)
-
-#### Snapshot Spec
-You can use the `spec.template` field to set the template for any `VolumeSnapshots` that get created,
-most notably the name of the [snapshot class](https://kubernetes.io/docs/concepts/storage/volume-snapshot-classes/)
-you want to use.
-
-```yaml
-apiVersion: gemini.fairwinds.com/v1beta1
-kind: SnapshotGroup
-metadata:
-  name: test-volume
-spec:
-  persistentVolumeClaim:
-    claimName: postgres
-  schedule:
-    - every: "10 minutes"
-      keep: 3
-  template:
-    spec:
-      volumeSnapshotClassName: test-snapshot-class      
-```
-
-### Restore
-> Caution: you cannot alter a PVC without some downtime!
-
-You can restore your PVC to a particular point in time using an annotation.
-
-First, check out what `VolumeSnapshots` are available:
-```bash
-$ kubectl get volumesnapshot
-NAME                           AGE
-test-volume-1585945609         15s
-```
-
-Next, you'll need to remove any Pods that are using the PVC:
-```bash
-$ kubectl scale all --all --replicas=0
-```
-
-The copy the timestamp from the first step, and use that to annotate the `SnapshotGroup`:
-```bash
-$ kubectl annotate snapshotgroup/test-volume --overwrite \
-  "gemini.fairwinds.com/restore=1585945609"
-```
-
-Finally, you can scale your Pods back up:
-```bash
-$ kubectl scale all --all --replicas=1
-```
-
-## End-to-End Example
-To see gemini working end-to-end, check out [the HackMD example](examples/hackmd)
-
-## Caveats
-* Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**
-* Be sure to test out both the backup and restore process to ensure Gemini is working properly
-* VolumeSnapshots simply grab the current state of the volume, without respect for things like in-flight database transactions. You may find you need to stop the application in order to get a consistently usable VolumeSnapshot.
-
+<a href="https://www.fairwinds.com/t-shirt-offer?utm_source=gemini&utm_medium=gemini&utm_campaign=gemini-tshirt">
+  <img src="https://www.fairwinds.com/hubfs/Doc_Banners/Fairwinds_OSS_User_Group_740x125_v6.png" alt="Love Fairwinds Open Source? Share your business email and job title and we'll send you a free Fairwinds t-shirt!" />
+</a>
 
 ## Other Projects from Fairwinds
 
@@ -223,5 +44,3 @@ Enjoying Gemini? Check out some of our other projects:
 * [Pluto](https://github.com/FairwindsOps/Pluto) - Detect Kubernetes resources that have been deprecated or removed in future versions
 * [Nova](https://github.com/FairwindsOps/Nova) - Check to see if any of your Helm charts have updates available
 * [rbac-manager](https://github.com/FairwindsOps/rbac-manager) - Simplify the management of RBAC in your Kubernetes clusters
-
-Or [check out the full list](https://www.fairwinds.com/open-source-software?utm_source=gemini&utm_medium=gemini&utm_campaign=gemini)
