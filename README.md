@@ -23,11 +23,6 @@ backups with minimal downtime.
 
 > Note: Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**.
 
-
-## Join the Fairwinds Open Source Community
-
-The goal of the Fairwinds Community is to exchange ideas, influence the open source roadmap, and network with fellow Kubernetes users. [Chat with us on Slack](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g) or [join the user group](https://www.fairwinds.com/open-source-software-user-group) to get involved!
-
 ## Installation
 The Gemini Helm chart will install both the CRD and the operator into your cluster
 
@@ -118,7 +113,6 @@ E.g. right after a new snapshot is created, you'll see backups for
 
 #### Using an Existing PVC
 > See the [extended example](/examples/hackmd/README.md)
-
 The following example schedules backups every 10 minutes for a pre-existing PVC named `postgres`.
 
 ```yaml
@@ -180,7 +174,6 @@ spec:
 
 ### Restore
 > Caution: you cannot alter a PVC without some downtime!
-
 You can restore your PVC to a particular point in time using an annotation.
 
 First, check out what `VolumeSnapshots` are available:
@@ -214,6 +207,17 @@ To see gemini working end-to-end, check out [the HackMD example](examples/hackmd
 * Be sure to test out both the backup and restore process to ensure Gemini is working properly
 * VolumeSnapshots simply grab the current state of the volume, without respect for things like in-flight database transactions. You may find you need to stop the application in order to get a consistently usable VolumeSnapshot.
 
+<!-- Begin boilerplate -->
+## Join the Fairwinds Open Source Community
+
+The goal of the Fairwinds Community is to exchange ideas, influence the open source roadmap,
+and network with fellow Kubernetes users.
+[Chat with us on Slack](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g)
+[join the user group](https://www.fairwinds.com/open-source-software-user-group) to get involved!
+
+<a href="https://www.fairwinds.com/t-shirt-offer?utm_source=gemini&utm_medium=gemini&utm_campaign=gemini-tshirt">
+  <img src="https://www.fairwinds.com/hubfs/Doc_Banners/Fairwinds_OSS_User_Group_740x125_v6.png" alt="Love Fairwinds Open Source? Share your business email and job title and we'll send you a free Fairwinds t-shirt!" />
+</a>
 
 ## Other Projects from Fairwinds
 
@@ -223,5 +227,3 @@ Enjoying Gemini? Check out some of our other projects:
 * [Pluto](https://github.com/FairwindsOps/Pluto) - Detect Kubernetes resources that have been deprecated or removed in future versions
 * [Nova](https://github.com/FairwindsOps/Nova) - Check to see if any of your Helm charts have updates available
 * [rbac-manager](https://github.com/FairwindsOps/rbac-manager) - Simplify the management of RBAC in your Kubernetes clusters
-
-Or [check out the full list](https://www.fairwinds.com/open-source-software?utm_source=gemini&utm_medium=gemini&utm_campaign=gemini)
