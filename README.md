@@ -18,8 +18,8 @@
 [codecov-link]: https://codecov.io/gh/FairwindsOps/gemini
 
 Gemini is a Kubernetes CRD and operator for managing `VolumeSnapshots`. This allows you
-to back up your `PersistentVolumes` on a regular schedule, retire old backups, and restore
-backups with minimal downtime.
+to create a snapshot of the data on your `PersistentVolumes` on a regular schedule,
+retire old snapshots, and restore snapshots with minimal downtime.
 
 > Note: Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**.
 
@@ -52,14 +52,14 @@ Before getting started with Gemini, it's a good idea to make sure you're able to
 
 ## Usage
 
-### Backup
-Gemini can schedule backups for an existing PVC, or create a new PVC to back up.
+### Snapshots
+Gemini can schedule snapshots for an existing PVC, or create a new PVC to back up.
 
 #### Schedules
 
-The `schedule` parameter tells Gemini how often to run backups, and how many historical backups to keep.
+The `schedule` parameter tells Gemini how often to create snapshots, and how many historical snapshots to keep.
 
-For example, the following schedule tells Gemini to create a backup every day, keeping two weeks worth of history:
+For example, the following schedule tells Gemini to create a snapshot every day, keeping two weeks worth of history:
 ```yaml
 apiVersion: gemini.fairwinds.com/v1beta1
 kind: SnapshotGroup
@@ -73,8 +73,8 @@ spec:
       keep: 14
 ```
 
-For a more complex example, Gemini can create new backups every 10 minutes,
-always keep the last 3 backups, and preserve historical hourly, daily, monthly, and yearly backups.
+For a more complex example, Gemini can create new snapshots every 10 minutes,
+always keep the last 3 snapshots, and preserve historical hourly, daily, monthly, and yearly snapshots.
 
 ```yaml
 apiVersion: gemini.fairwinds.com/v1beta1
@@ -97,14 +97,14 @@ spec:
       keep: 1
 ```
 
-Note that `keep` specifies how many historical backups you want, _in addition_ to the most recent backup.
+Note that `keep` specifies how many historical snapshots you want, _in addition_ to the most recent snapshot.
 This way the schedule
 ```yaml
 - every: 10 minutes
   keep: 3
 ```
-will always give you _at least_ 30 minutes of backup coverage. But you will see four snapshots at any given time.
-E.g. right after a new snapshot is created, you'll see backups for
+will always give you _at least_ 30 minutes of snapshot coverage. But you will see four snapshots at any given time.
+E.g. right after a new snapshot is created, you'll see snapshots for
 * 0m ago
 * 10m ago
 * 20m ago
@@ -113,7 +113,7 @@ E.g. right after a new snapshot is created, you'll see backups for
 
 #### Using an Existing PVC
 > See the [extended example](/examples/hackmd/README.md)
-The following example schedules backups every 10 minutes for a pre-existing PVC named `postgres`.
+The following example schedules snapshots every 10 minutes for a pre-existing PVC named `postgres`.
 
 ```yaml
 apiVersion: gemini.fairwinds.com/v1beta1
@@ -204,7 +204,7 @@ To see gemini working end-to-end, check out [the HackMD example](examples/hackmd
 
 ## Caveats
 * Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**
-* Be sure to test out both the backup and restore process to ensure Gemini is working properly
+* Be sure to test out both the snapshot and restore process to ensure Gemini is working properly
 * VolumeSnapshots simply grab the current state of the volume, without respect for things like in-flight database transactions. You may find you need to stop the application in order to get a consistently usable VolumeSnapshot.
 
 <!-- Begin boilerplate -->
