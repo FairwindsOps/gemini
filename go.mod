@@ -3,15 +3,16 @@ module github.com/fairwindsops/gemini
 go 1.16
 
 require (
+	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.1.0
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
-	k8s.io/api v0.21.3
-	k8s.io/apiextensions-apiserver v0.21.3
-	k8s.io/apimachinery v0.21.3
-	k8s.io/client-go v0.21.3
+	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
+	k8s.io/api v0.23.0
+	k8s.io/apiextensions-apiserver v0.23.0
+	k8s.io/apimachinery v0.23.0
+	k8s.io/client-go v0.23.0
 	k8s.io/klog v1.0.0
-	sigs.k8s.io/controller-runtime v0.9.0
+	sigs.k8s.io/controller-runtime v0.11.1
 )
 
 replace (
