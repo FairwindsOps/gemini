@@ -3,7 +3,7 @@ module github.com/fairwindsops/gemini
 go 1.16
 
 require (
-	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.1.0
+	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	k8s.io/api v0.21.3
