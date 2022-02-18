@@ -6,14 +6,14 @@ orbs:
 executors:
   golang-exec:
     docker:
-      - image: circleci/golang:1.14-stretch
+      - image: circleci/golang:1.17-stretch
 
 jobs:
   test:
     working_directory: /go/src/github.com/fairwindsops/gemini
 
     docker:
-      - image: circleci/golang:1.14
+      - image: circleci/golang:1.17
         environment:
           GO111MODULE: "on"
     steps:
