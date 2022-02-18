@@ -21,7 +21,7 @@ import (
 	"time"
 
 	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 var durations = map[string]time.Duration{
