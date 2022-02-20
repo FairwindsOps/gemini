@@ -16,8 +16,10 @@ package kube
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -89,10 +91,15 @@ func createClient() *Client {
 		panic(err)
 	}
 	restMapper := restmapper.NewDiscoveryRESTMapper(resources)
-	snapshotCRD, err := extClientSet.ApiextensionsV1beta1().CustomResourceDefinitions().Get(context.TODO(), "volumesnapshots."+VolumeSnapshotGroupName, metav1.GetOptions{})
+	snapshotCRD, err := extClientSet.ApiextensionsV1().CustomResourceDefinitions().Get(context.TODO(), "volumesnapshots."+VolumeSnapshotGroupName, metav1.GetOptions{})
 	if err != nil {
 		panic(err)
 	}
+	volumeSnapshotVersion, err := getVolumeSnapshotVersion(snapshotCRD.Spec.Versions)
+	if err != nil {
+		panic(err)
+	}
+
 	vsMapping, err := restMapper.RESTMapping(schema.GroupKind{
 		Group: VolumeSnapshotGroupName,
 		Kind:  VolumeSnapshotKind,
@@ -115,6 +122,15 @@ func createClient() *Client {
 		InformerFactory:       informerFactory,
 		SnapshotClient:        snapshotClient,
 		SnapshotGroupClient:   sgClientSet.SnapshotgroupV1beta1(),
-		VolumeSnapshotVersion: VolumeSnapshotGroupName + "/" + snapshotCRD.Spec.Version,
+		VolumeSnapshotVersion: VolumeSnapshotGroupName + "/" + volumeSnapshotVersion,
 	}
+}
+
+func getVolumeSnapshotVersion(v []v1.CustomResourceDefinitionVersion) (string, error) {
+	for _, crd := range v {
+		if crd.Served {
+			return crd.Name, nil
+		}
+	}
+	return "", errors.New("no " + VolumeSnapshotGroupName + " served API found")
 }
