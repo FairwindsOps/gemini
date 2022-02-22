@@ -36,7 +36,7 @@ func SetFakeClient() *Client {
 }
 
 func createFakeClient() *Client {
-	objects := []k8sruntime.Object{}
+	var objects []k8sruntime.Object
 	k8s := k8sfake.NewSimpleClientset(objects...)
 	_ = snapshotsFake.NewSimpleClientset(objects...)
 
