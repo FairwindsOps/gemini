@@ -25,7 +25,7 @@ jobs:
       - image: golangci/golangci-lint:v1.46.2
     steps:
       - checkout
-      - run: golangci-lint run -v
+      - run: golangci-lint run -v --timeout 5m
 workflows:
   version: 2
   test:
