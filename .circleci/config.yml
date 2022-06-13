@@ -17,17 +17,20 @@ jobs:
     steps:
       - checkout
       - run: |
-          go install golang.org/x/lint/golint
-          go list ./... | grep -v types | xargs golint -set_exit_status
-          go list ./... | grep -v types | xargs go vet
           go get -u gotest.tools/gotestsum
           mkdir -p /tmp/test-results/go
           gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
-
+  lint:
+    docker:
+      - image: golangci/golangci-lint:v1.46.2
+    steps:
+      - checkout
+      - run: golangci-lint run -v
 workflows:
   version: 2
   test:
     jobs:
+      - lint
       - test
       - rok8s-scripts/docker_build_and_push:
           name: build-container
@@ -38,6 +41,7 @@ workflows:
           config_file: .circleci/build.config
           requires:
             - test
+            - lint
           filters:
             branches:
               only: /pull\/[0-9]+/
