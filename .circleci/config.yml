@@ -6,16 +6,14 @@ orbs:
 executors:
   golang-exec:
     docker:
-      - image: circleci/golang:1.17-stretch
+      - image: cimg/go:1.18
 
 jobs:
   test:
-    working_directory: /go/src/github.com/fairwindsops/gemini
+    working_directory: /home/circleci/go/src/github.com/fairwindsops/gemini
 
     docker:
-      - image: circleci/golang:1.17
-        environment:
-          GO111MODULE: "on"
+      - image: cimg/go:1.18
     steps:
       - checkout
       - run: |
@@ -25,7 +23,6 @@ jobs:
           go get -u gotest.tools/gotestsum
           mkdir -p /tmp/test-results/go
           gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
-          bash <(curl -s https://codecov.io/bash)
 
 workflows:
   version: 2
