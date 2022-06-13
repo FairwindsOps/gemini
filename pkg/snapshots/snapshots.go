@@ -216,7 +216,7 @@ func deleteSnapshots(toDelete []*GeminiSnapshot) error {
 
 func waitUntilSnapshotReady(namespace, name string, readyTimeoutSeconds int) (*GeminiSnapshot, error) {
 	timeout := time.After(time.Duration(readyTimeoutSeconds) * time.Second)
-	tick := time.Tick(time.Second)
+	tick := time.Tick(time.Second) //nolint TODO: consider using time.NewTicker instead
 	for {
 		select {
 		case <-timeout:
