@@ -22,10 +22,10 @@ jobs:
           gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
   lint:
     docker:
-      - image: golangci/golangci-lint:v1.46.2
+      - image: cimg/go:1.18
     steps:
       - checkout
-      - run: golangci-lint run -v
+      - run: go vet ./...
 workflows:
   version: 2
   test:
