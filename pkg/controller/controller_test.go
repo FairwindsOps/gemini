@@ -29,11 +29,6 @@ import (
 	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 )
 
-var (
-	alwaysReady        = func() bool { return true }
-	noResyncPeriodFunc = func() time.Duration { return 0 }
-)
-
 func newSnapshotGroup(name, namespace string) *snapshotgroup.SnapshotGroup {
 	return &snapshotgroup.SnapshotGroup{
 		TypeMeta: metav1.TypeMeta{APIVersion: snapshotgroup.SchemeGroupVersion.String()},

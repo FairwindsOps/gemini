@@ -36,8 +36,6 @@ const defaultSnapshotReadyTimeoutSeconds = 60
 
 // Controller represents a SnapshotGroup controller
 type Controller struct {
-	client *kube.Client
-
 	sgLister listers.SnapshotGroupLister
 	sgSynced cache.InformerSynced
 
