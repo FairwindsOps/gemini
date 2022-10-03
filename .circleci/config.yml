@@ -17,8 +17,9 @@ jobs:
     steps:
       - checkout
       - run: |
-          go install gotest.tools/gotestsum
-          go get gotest.tools/gotestsum
+          curl -L "https://github.com/gotestyourself/gotestsum/releases/download/v1.8.1/gotestsum_1.8.1_linux_amd64.tar.gz" > /tmp/gotestsum.tar.gz
+          tar -xvf /tmp/gotestsum.tar.gz -C /tmp/
+          mv /tmp/gotestsum /usr/local/bin/
           mkdir -p /tmp/test-results/go
           gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
   lint:
