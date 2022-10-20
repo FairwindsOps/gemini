@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 RUN go build -a -o gemini
 
-FROM alpine:3.15
+FROM alpine:3.16.2
 WORKDIR /usr/local/bin
 RUN apk --no-cache add ca-certificates
 
