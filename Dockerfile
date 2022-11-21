@@ -1,4 +1,4 @@
-FROM golang:1.19.2 AS build-env
+FROM golang:1.19.3 AS build-env
 WORKDIR /go/src/github.com/fairwindsops/gemini/
 
 ENV GO111MODULE=on
@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 RUN go build -a -o gemini
 
-FROM alpine:3.15
+FROM alpine:3.16.2
 WORKDIR /usr/local/bin
 RUN apk --no-cache add ca-certificates
 
