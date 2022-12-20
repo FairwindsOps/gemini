@@ -17,9 +17,10 @@ jobs:
     steps:
       - checkout
       - run: |
-          curl -L "https://github.com/gotestyourself/gotestsum/releases/download/v1.8.1/gotestsum_1.8.1_linux_amd64.tar.gz" > /tmp/gotestsum.tar.gz
-          tar -xvf /tmp/gotestsum.tar.gz -C /tmp/
-          mv /tmp/gotestsum /usr/local/bin/
+          go install gotest.tools/gotestsum@latest
+          mkdir -p /tmp/test-results/go
+          gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
+
   lint:
     docker:
       - image: golangci/golangci-lint:v1.46.2
