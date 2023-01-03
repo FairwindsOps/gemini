@@ -6,20 +6,21 @@ orbs:
 executors:
   golang-exec:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.19
 
 jobs:
   test:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/gemini
 
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.19
     steps:
       - checkout
       - run: |
-          go get -u gotest.tools/gotestsum
+          go install gotest.tools/gotestsum@latest
           mkdir -p /tmp/test-results/go
           gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
+
   lint:
     docker:
       - image: golangci/golangci-lint:v1.46.2
