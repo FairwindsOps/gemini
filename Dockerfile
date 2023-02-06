@@ -1,4 +1,4 @@
-FROM golang:1.19.3 AS build-env
+FROM golang:1.20.0 AS build-env
 WORKDIR /go/src/github.com/fairwindsops/gemini/
 
 ENV GO111MODULE=on
