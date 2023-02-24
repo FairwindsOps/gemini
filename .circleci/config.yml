@@ -6,32 +6,91 @@ orbs:
 executors:
   golang-exec:
     docker:
-      - image: cimg/go:1.19
+      - image: cimg/go:1.20
+
+references:
+  install_vault: &install_vault
+    run:
+      name: install hashicorp vault
+      command: |
+        apk --update add curl yq
+        cd /tmp
+        curl -LO https://releases.hashicorp.com/vault/1.9.2/vault_1.9.2_linux_amd64.zip
+        unzip vault_1.9.2_linux_amd64.zip
+        mv vault /usr/bin/vault
+
+  set_environment_variables: &set_environment_variables
+    run:
+      name: Set Environment Variables
+      command: |
+        echo 'export CI_SHA1=$CIRCLE_SHA1' >> ${BASH_ENV}
+        echo 'export CI_BRANCH=$CIRCLE_BRANCH' >> ${BASH_ENV}
+        echo 'export CI_BUILD_NUM=$CIRCLE_BUILD_NUM' >> ${BASH_ENV}
+        echo 'export CI_TAG=$CIRCLE_TAG' >> ${BASH_ENV}
+        echo 'export PUSH_ALL_VERSION_TAGS=true' >> ${BASH_ENV}
+        echo 'export GOPROXY=https://proxy.golang.org' >> ${BASH_ENV}
+        echo 'export GO111MODULE=on' >> ${BASH_ENV}
+        echo 'export GOFLAGS=-mod=mod' >> ${BASH_ENV}
+        echo 'export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"' >> $BASH_ENV
+
+  install_vault_alpine: &install_vault_alpine
+    run:
+      name: install hashicorp vault
+      command: |
+        apk --update add curl yq
+        cd /tmp
+        curl -LO https://releases.hashicorp.com/vault/1.9.3/vault_1.9.3_linux_amd64.zip
+        unzip vault_1.9.3_linux_amd64.zip
+        mv vault /usr/bin/vault
+
+commands:
+  install_goreleaser_dependencies:
+    description: Installs dependencies for CI scripts
+    steps:
+    - run: apk update
+    # gettext provides envsubst
+    - run: apk add gettext
+    # Register other docker platforms, to build arm64.
+    # This shouldn't be needed, why TBD.
+    - run: docker run --privileged --rm tonistiigi/binfmt --install all
 
 jobs:
   test:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/gemini
 
     docker:
-      - image: cimg/go:1.19
+      - image: cimg/go:1.20
     steps:
       - checkout
       - run: |
           go install gotest.tools/gotestsum@latest
           mkdir -p /tmp/test-results/go
           gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
-
-  lint:
+  build_and_push:
+    working_directory: /go/src/github.com/fairwindsops/polaris/
+    resource_class: large
+    shell: /bin/bash
     docker:
-      - image: golangci/golangci-lint:v1.46.2
+      # The goreleaser image tag determins the version of Go.
+      # Manually check goreleaser images for their version of Go.
+      # Ref: https://hub.docker.com/r/goreleaser/goreleaser/tags
+      - image: goreleaser/goreleaser:v1.11.4
     steps:
       - checkout
-      - run: golangci-lint run -v --timeout 5m
+      - setup_remote_docker:
+          version: 20.10.11
+      - *install_vault_alpine
+      - rok8s/get_vault_env:
+          vault_path: repo/global/env
+      - *set_environment_variables
+      - run: docker login quay.io -u="${FAIRWINDS_QUAY_USER}" -p="${FAIRWINDS_QUAY_TOKEN}"
+      - install_goreleaser_dependencies
+      - run: scripts/goreleaser.sh
+
 workflows:
   version: 2
   test:
     jobs:
-      - lint
       - test
       - rok8s-scripts/docker_build_and_push:
           name: build-container
@@ -42,7 +101,6 @@ workflows:
           config_file: .circleci/build.config
           requires:
             - test
-            - lint
           filters:
             branches:
               only: /pull\/[0-9]+/
