@@ -21,8 +21,6 @@ Gemini is a Kubernetes CRD and operator for managing `VolumeSnapshots`. This all
 to create a snapshot of the data on your `PersistentVolumes` on a regular schedule,
 retire old snapshots, and restore snapshots with minimal downtime.
 
-> Note: Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**.
-
 ## Installation
 The Gemini Helm chart will install both the CRD and the operator into your cluster
 
@@ -49,6 +47,15 @@ kubectl api-resources | grep volumesnapshots
 Before getting started with Gemini, it's a good idea to make sure you're able to
 [create a VolumeSnapshot manually](https://kubernetes.io/docs/concepts/storage/volume-snapshots/#volumesnapshots).
 
+### Upgrading to V2
+Version 2.0 of Gemini updates the CRD from `v1beta1` to `v1`. There are no substantial
+changes, but `v1` adds better support for PersistentVolumeClaims on Kubernetes 1.25.
+
+If you want to keep the v1beta1 CRD available, you can run:
+```
+kubectl apply -f https://raw.githubusercontent.com/FairwindsOps/gemini/main/pkg/types/snapshotgroup/v1beta1/crd-with-beta1.yaml
+```
+before upgrading.
 
 ## Usage
 
