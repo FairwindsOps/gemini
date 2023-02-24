@@ -41,10 +41,11 @@ func CreateCustomResourceDefinition(namespace string, clientSet apiextensionscli
 	if err == nil {
 		fmt.Println("CRD SnapshotGroup is created")
 	} else if apierrors.IsAlreadyExists(err) {
-		fmt.Println("CRD SnapshotGroup already exists")
-	} else {
-		fmt.Printf("Fail to create CRD SnapshotGroup: %+v\n", err)
-
+		fmt.Println("CRD SnapshotGroup already exists, trying update")
+		_, err = clientSet.ApiextensionsV1().CustomResourceDefinitions().Update(context.TODO(), crd, metav1.UpdateOptions{})
+	}
+	if err != nil {
+		fmt.Printf("Failed to create CRD SnapshotGroup: %+v\n", err)
 		return nil, err
 	}
 
