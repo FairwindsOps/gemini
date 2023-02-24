@@ -1,0 +1,87 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: snapshotgroups.gemini.fairwinds.com
+spec:
+  group: gemini.fairwinds.com
+  names:
+    plural: snapshotgroups
+    singular: snapshotgroup
+    kind: SnapshotGroup
+    listKind: SnapshotGroupList
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                persistentVolumeClaim:
+                  type: object
+                  properties:
+                    claimName:
+                      description: PersistentVolumeClaim name to backup
+                      type: string
+                    spec:
+                      description: PersistentVolumeClaim spec to create and backup
+                      type: object
+                      properties:
+                        storageClassName:
+                          type: string
+                        accessModes:
+                          type: array
+                          items:
+                            type: string
+                        volumeName:
+                          type: string
+                        resources:
+                          type: object
+                          properties:
+                            requests:
+                              type: object
+                              additionalProperties: true
+                            limits:
+                              type: object
+                              properties:
+                                storageClassName:
+                                  type: string
+                              additionalProperties: true
+                        selector:
+                          type: object
+                          properties:
+                            matchLabels:
+                              type: object
+                              additionalProperties: true
+                            matchExpressions:
+                              type: array
+                              items:
+                                type: object
+                                additionalProperties: true
+                schedule:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      every:
+                        description: Interval for creating new backups
+                        type: string
+                      keep:
+                        description: Number of historical backups to keep
+                        type: integer
+                template:
+                  type: object
+                  properties:
+                    spec:
+                      description: VolumeSnapshot spec
+                      type: object
+                      properties:
+                        volumeSnapshotClassName:
+                          description: 'VolumeSnapshotClassName is the name of the VolumeSnapshotClass requested by the VolumeSnapshot. VolumeSnapshotClassName may be left nil to indicate that the default SnapshotClass should be used. A given cluster may have multiple default Volume SnapshotClasses: one default per CSI Driver. If a VolumeSnapshot does not specify a SnapshotClass, VolumeSnapshotSource will be checked to figure out what the associated CSI Driver is, and the default VolumeSnapshotClass associated with that CSI Driver will be used. If more than one VolumeSnapshotClass exist for a given CSI Driver and more than one have been marked as default, CreateSnapshot will fail and generate an event. Empty string is not allowed for this field.'
+                          type: string
+  conversion:
+    strategy: None

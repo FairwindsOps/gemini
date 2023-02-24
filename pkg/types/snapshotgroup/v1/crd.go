@@ -3,101 +3,32 @@ package v1
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"time"
+	_ "embed"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+//go:embed crd.yaml
+var crdYAML string
+
 // CreateCustomResourceDefinition creates the CRD and add it into Kubernetes. If there is error,
 // it will do some clean up.
 func CreateCustomResourceDefinition(namespace string, clientSet apiextensionsclientset.Interface) (*apiextensionsv1.CustomResourceDefinition, error) {
-	crdVersion := apiextensionsv1.CustomResourceDefinitionVersion{
-		Name:               GroupVersion,
-		Served:             true,
-		Storage:            true,
-		Deprecated:         false,
-		DeprecationWarning: nil,
-		Schema: &apiextensionsv1.CustomResourceValidation{
-			OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
-				Type: "object",
-				Properties: map[string]apiextensionsv1.JSONSchemaProps{
-					"spec": {
-						Type: "object",
-						Properties: map[string]apiextensionsv1.JSONSchemaProps{
-							"persistentVolumeClaim": {
-								Type: "object",
-								Properties: map[string]apiextensionsv1.JSONSchemaProps{
-									"claimName": {
-										Description: "PersistentVolumeClaim name to backup",
-										Type:        "string",
-									},
-									"spec": {
-										Description: "PersistentVolumeClaim spec to create and backup",
-										Type:        "object",
-									},
-								},
-							},
-							"schedule": {
-								Type: "array",
-								Items: &apiextensionsv1.JSONSchemaPropsOrArray{
-									Schema: &apiextensionsv1.JSONSchemaProps{
-										Type: "object",
-										Properties: map[string]apiextensionsv1.JSONSchemaProps{
-											"every": {
-												Description: "Interval for creating new backups",
-												Type:        "string",
-											},
-											"keep": {
-												Description: "Number of historical backups to keep",
-												Type:        "integer",
-											},
-										},
-									},
-								},
-							},
-							"template": {
-								Type: "object",
-								Properties: map[string]apiextensionsv1.JSONSchemaProps{
-									"spec": {
-										Description: "VolumeSnapshot spec",
-										Type:        "object",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Subresources:             nil,
-		AdditionalPrinterColumns: nil,
+	crd := &apiextensionsv1.CustomResourceDefinition{}
+	err := yaml.Unmarshal([]byte(crdYAML), crd)
+	if err != nil {
+		return nil, err
 	}
 
-	crd := &apiextensionsv1.CustomResourceDefinition{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      CRDName,
-			Namespace: namespace,
-		},
-		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
-			Group: GroupName,
-			Names: apiextensionsv1.CustomResourceDefinitionNames{
-				Plural: Plural,
-				Kind:   reflect.TypeOf(SnapshotGroup{}).Name(),
-			},
-			Scope:                 apiextensionsv1.NamespaceScoped,
-			Versions:              []apiextensionsv1.CustomResourceDefinitionVersion{crdVersion},
-			PreserveUnknownFields: false,
-		},
-	}
-
-	_, err := clientSet.ApiextensionsV1().CustomResourceDefinitions().Create(context.TODO(), crd, metav1.CreateOptions{})
+	_, err = clientSet.ApiextensionsV1().CustomResourceDefinitions().Create(context.TODO(), crd, metav1.CreateOptions{})
 	if err == nil {
 		fmt.Println("CRD SnapshotGroup is created")
 	} else if apierrors.IsAlreadyExists(err) {
