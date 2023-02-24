@@ -19,11 +19,18 @@ import (
 //go:embed crd.yaml
 var crdYAML string
 
+//go:embed crd-with-beta1.yaml
+var crdWithBeta1YAML string
+
 // CreateCustomResourceDefinition creates the CRD and add it into Kubernetes. If there is error,
 // it will do some clean up.
 func CreateCustomResourceDefinition(namespace string, clientSet apiextensionsclientset.Interface) (*apiextensionsv1.CustomResourceDefinition, error) {
 	crd := &apiextensionsv1.CustomResourceDefinition{}
-	err := yaml.Unmarshal([]byte(crdYAML), crd)
+	yamlToParse := crdYAML
+	if os.Getenv("INCLUDE_GEMINI_BETA_CRD") != "" {
+		yamlToParse = crdWithBeta1YAML
+	}
+	err := yaml.Unmarshal([]byte(yamlToParse), crd)
 	if err != nil {
 		return nil, err
 	}
