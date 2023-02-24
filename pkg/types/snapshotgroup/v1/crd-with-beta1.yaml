@@ -18,7 +18,6 @@ spec:
       storage: false
       schema:
         openAPIV3Schema:
-          $schema: https://json-schema.org/draft/2020-12/schema
           type: object
           properties:
             spec:
@@ -59,7 +58,6 @@ spec:
       storage: true
       schema:
         openAPIV3Schema:
-          $schema: https://json-schema.org/draft/2020-12/schema
           type: object
           properties:
             spec:
