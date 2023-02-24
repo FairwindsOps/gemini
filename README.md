@@ -112,7 +112,7 @@ E.g. right after a new snapshot is created, you'll see snapshots for
 
 
 #### Using an Existing PVC
-> See the [extended example](/examples/hackmd/README.md)
+> See the [extended example](/examples/codimd/README.md)
 The following example schedules snapshots every 10 minutes for a pre-existing PVC named `postgres`.
 
 ```yaml
@@ -200,7 +200,7 @@ $ kubectl scale all --all --replicas=1
 ```
 
 ## End-to-End Example
-To see gemini working end-to-end, check out [the HackMD example](examples/hackmd)
+To see gemini working end-to-end, check out [the CodiMD example](examples/codimd)
 
 ## Caveats
 * Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**
