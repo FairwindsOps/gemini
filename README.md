@@ -55,7 +55,7 @@ If you want to keep the v1beta1 CRD available, you can run:
 ```
 kubectl apply -f https://raw.githubusercontent.com/FairwindsOps/gemini/main/pkg/types/snapshotgroup/v1beta1/crd-with-beta1.yaml
 ```
-before upgrading.
+before upgrading, and add `--skip-crds` when running `helm install`.
 
 ## Usage
 
