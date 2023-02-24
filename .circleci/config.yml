@@ -33,16 +33,6 @@ references:
         echo 'export GOFLAGS=-mod=mod' >> ${BASH_ENV}
         echo 'export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"' >> $BASH_ENV
 
-  install_vault_alpine: &install_vault_alpine
-    run:
-      name: install hashicorp vault
-      command: |
-        apk --update add curl yq
-        cd /tmp
-        curl -LO https://releases.hashicorp.com/vault/1.9.3/vault_1.9.3_linux_amd64.zip
-        unzip vault_1.9.3_linux_amd64.zip
-        mv vault /usr/bin/vault
-
 commands:
   install_goreleaser_dependencies:
     description: Installs dependencies for CI scripts
@@ -79,7 +69,7 @@ jobs:
       - checkout
       - setup_remote_docker:
           version: 20.10.11
-      - *install_vault_alpine
+      - *install_vault
       - rok8s/get_vault_env:
           vault_path: repo/global/env
       - *set_environment_variables
