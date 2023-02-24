@@ -15,6 +15,7 @@
 package kube
 
 import (
+	"os"
 	"context"
 	"errors"
 	"time"
@@ -113,8 +114,10 @@ func createClient() *Client {
 	}
 	snapshotClient := dynamicInterface.Resource(vsMapping.Resource)
 
-	if _, err = snapshotgroupv1.CreateCustomResourceDefinition("crd-ns", extClientSet); err != nil {
-		panic(err)
+	if os.Getenv("GEMINI_CREATE_CRD") != "" {
+		if _, err = snapshotgroupv1.CreateCustomResourceDefinition("crd-ns", extClientSet); err != nil {
+			panic(err)
+		}
 	}
 	return &Client{
 		K8s:                   k8s,
