@@ -28,8 +28,8 @@ import (
 
 	"github.com/fairwindsops/gemini/pkg/kube"
 	"github.com/fairwindsops/gemini/pkg/snapshots"
-	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
-	listers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/listers/snapshotgroup/v1beta1"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	listers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/listers/snapshotgroup/v1"
 )
 
 const defaultSnapshotReadyTimeoutSeconds = 60
