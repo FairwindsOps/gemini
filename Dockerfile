@@ -1,26 +1,21 @@
-FROM golang:1.20.1 AS build-env
-WORKDIR /go/src/github.com/fairwindsops/gemini/
-
-ENV GO111MODULE=on
-ENV GOPROXY=https://proxy.golang.org
-ENV CGO_ENABLED=0
-ENV GOOS=linux
-ENV GOARCH=amd64
-
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
-
-COPY . .
-RUN go build -a -o gemini
-
 FROM alpine:3.17
+
+LABEL org.opencontainers.image.authors="FairwindsOps, Inc." \
+      org.opencontainers.image.vendor="FairwindsOps, Inc." \
+      org.opencontainers.image.title="gemini" \
+      org.opencontainers.image.description="Automated backups of PersistentVolumeClaims in Kubernetes using VolumeSnapshots" \
+      org.opencontainers.image.documentation="https://github.com/FairwindsOps/gemini" \
+      org.opencontainers.image.source="https://github.com/FairwindsOps/gemini" \
+      org.opencontainers.image.url="https://github.com/FairwindsOps/gemini" \
+      org.opencontainers.image.licenses="Apache License 2.0"
+
 WORKDIR /usr/local/bin
+RUN apk -U upgrade
 RUN apk --no-cache add ca-certificates
 
 RUN addgroup -S gemini && adduser -u 1200 -S gemini -G gemini
 USER 1200
-COPY --from=build-env /go/src/github.com/fairwindsops/gemini/gemini .
+COPY gemini .
 
 WORKDIR /opt/app
 
