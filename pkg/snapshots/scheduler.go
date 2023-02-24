@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
 	"k8s.io/klog/v2"
 )
 
