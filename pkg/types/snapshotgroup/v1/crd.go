@@ -35,6 +35,7 @@ func CreateCustomResourceDefinition(namespace string, clientSet apiextensionscli
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("Parsed CRD", crd.ObjectMeta.Name)
 
 	_, err = clientSet.ApiextensionsV1().CustomResourceDefinitions().Create(context.TODO(), crd, metav1.CreateOptions{})
 	if err == nil {
