@@ -89,11 +89,9 @@ jobs:
 
 workflows:
   version: 2
-  test:
-    jobs:
-    - test
   build_and_push:
     jobs:
+    - test
     - build_and_push:
         context: org-global
         requires:
