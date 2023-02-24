@@ -91,57 +91,14 @@ workflows:
   version: 2
   test:
     jobs:
-      - test
-      - rok8s-scripts/docker_build_and_push:
-          name: build-container
-          docker-push: false
-          docker-login: false
-          password-variable: "dne"
-          enable_docker_layer_caching: false
-          config_file: .circleci/build.config
-          requires:
-            - test
-          filters:
-            branches:
-              only: /pull\/[0-9]+/
-      - rok8s-scripts/docker_build_and_push:
-          name: build-and-push-container
-          docker-push: true
-          enable_docker_layer_caching: false
-          config_file: .circleci/build.config
-          context: org-global
-          docker-login: true
-          password-variable: "fairwinds_quay_token"
-          registry: quay.io
-          username: fairwinds+circleci
-          requires:
-            - test
-          filters:
-            branches:
-              ignore: /pull\/[0-9]+/
-
-  release:
-    jobs:
-      - rok8s-scripts/docker_build_and_push:
-          name: build-and-push-container
-          docker-push: true
-          enable_docker_layer_caching: false
-          config_file: .circleci/build.config
-          context: org-global
-          docker-login: true
-          password-variable: "fairwinds_quay_token"
-          registry: quay.io
-          username: fairwinds+circleci
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /.*/
-      - rok8s-scripts/github_release:
-          requires:
-            - build-and-push-container
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /.*/
+    - test
+  build_and_push:
+    - build_and_push:
+        context: org-global
+        requires:
+          - test
+        filters:
+          branches:
+            ignore: /pull\/[0-9]+/
+          tags:
+            ignore: /^testing-.*/
