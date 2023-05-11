@@ -133,7 +133,7 @@ func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]stri
 		Spec: sg.Spec.Template.Spec,
 	}
 	name := getPVCName(sg)
-	klog.Infof("%s/%s: creating snapshot for PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
+	klog.V(3).Infof("%s/%s: creating snapshot for PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
 	snapshot.Spec.Source.PersistentVolumeClaimName = &name
 
 	marshaled, err := json.Marshal(snapshot)

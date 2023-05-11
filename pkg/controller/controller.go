@@ -141,7 +141,7 @@ func (c *Controller) processNextWorkItem() bool {
 			return fmt.Errorf("%s/%s: error syncing %#v: %s, requeuing", item.namespace, item.name, item, err.Error())
 		}
 		c.workqueue.Forget(obj)
-		klog.Infof("%s/%s: successfully performed %s", item.namespace, item.name, taskLabels[item.task])
+		klog.V(5).Infof("%s/%s: successfully performed %s", item.namespace, item.name, taskLabels[item.task])
 		return nil
 	}(obj)
 
