@@ -56,19 +56,19 @@ func ReconcileBackupsForSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 	if err != nil {
 		return err
 	}
-	klog.V(5).Infof("%s/%s: going to create %d, delete %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toCreate), len(toDelete))
+	klog.V(3).Infof("%s/%s: going to create %d, delete %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toCreate), len(toDelete))
 
 	err = deleteSnapshots(toDelete)
 	if err != nil {
 		return err
 	}
-	klog.V(5).Infof("%s/%s: deleted %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toDelete))
+	klog.V(3).Infof("%s/%s: deleted %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toDelete))
 
 	_, err = createSnapshotForIntervals(sg, toCreate)
 	if err != nil {
 		return err
 	}
-	klog.V(5).Infof("%s/%s: created %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toCreate))
+	klog.V(3).Infof("%s/%s: created %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toCreate))
 
 	return nil
 }
@@ -80,7 +80,7 @@ func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup, waitForRestoreSeconds
 		err := fmt.Errorf("%s/%s: has an empty restore annotation", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 		return err
 	}
-	klog.V(5).Infof("%s/%s: restoring to %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
+	klog.V(3).Infof("%s/%s: restoring to %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
 	snap, err := createSnapshotForRestore(sg)
 	if err != nil {
 		klog.Errorf("%s/%s: could not create failsafe snapshot before restore - %v", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, err)
@@ -104,6 +104,6 @@ func OnSnapshotGroupDelete(sg *snapshotgroup.SnapshotGroup) error {
 	// TODO(rbren): option to delete snapshots on group deletion
 	name := sg.ObjectMeta.Name
 	namespace := sg.ObjectMeta.Namespace
-	klog.V(5).Infof("%s/%s was deleted. Taking no action. You may want to run kubectl delete volumesnapshots --all --namespace %s", namespace, name, namespace)
+	klog.V(3).Infof("%s/%s was deleted. Taking no action. You may want to run kubectl delete volumesnapshots --all --namespace %s", namespace, name, namespace)
 	return nil
 }

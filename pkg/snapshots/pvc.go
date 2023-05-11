@@ -60,7 +60,7 @@ func maybeCreatePVC(sg *snapshotgroup.SnapshotGroup) (*corev1.PersistentVolumeCl
 
 func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, annotations map[string]string) (*corev1.PersistentVolumeClaim, error) {
 	name := getPVCName(sg)
-	klog.V(5).Infof("%s/%s: creating PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
+	klog.V(3).Infof("%s/%s: creating PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
@@ -79,7 +79,7 @@ func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClai
 }
 
 func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
-	klog.V(5).Infof("%s/%s: restoring PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	klog.V(3).Infof("%s/%s: restoring PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	err := deletePVC(sg)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
@@ -102,7 +102,7 @@ func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
 
 func deletePVC(sg *snapshotgroup.SnapshotGroup) error {
 	name := getPVCName(sg)
-	klog.V(5).Infof("%s/%s: deleting PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
+	klog.V(3).Infof("%s/%s: deleting PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	return pvcClient.Delete(context.TODO(), name, metav1.DeleteOptions{})
