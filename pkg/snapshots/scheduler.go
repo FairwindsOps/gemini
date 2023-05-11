@@ -70,7 +70,7 @@ func getSnapshotChanges(schedules []snapshotgroup.SnapshotSchedule, snapshots []
 				// This is the latest snapshot
 				nextSnapshotTime := snapshot.Timestamp.Add(parsed)
 				if nextSnapshotTime.Before(now) {
-					klog.Infof("  stale for interval %s", interval)
+					klog.V(5).Infof("  stale for interval %s", interval)
 					numSnapshotsByInterval[interval]++
 				} else {
 					needsCreation[interval] = false
@@ -88,7 +88,7 @@ func getSnapshotChanges(schedules []snapshotgroup.SnapshotSchedule, snapshots []
 
 	toCreate := []string{}
 	for k, v := range needsCreation {
-		klog.Infof("need creation %v %v", k, v)
+		klog.V(5).Infof("need creation %v %v", k, v)
 		if v {
 			klog.V(5).Infof("Need creation for interval %s: %t", k, v)
 			toCreate = append(toCreate, k)

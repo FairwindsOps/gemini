@@ -26,7 +26,7 @@ import (
 )
 
 func updateSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
-	klog.Infof("%s/%s: updating PVC spec", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	klog.V(5).Infof("%s/%s: updating PVC spec", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	client := kube.GetClient()
 	sg.Spec.Claim.Spec.VolumeName = ""
 	_, err := client.SnapshotGroupClient.SnapshotGroups(sg.ObjectMeta.Namespace).Update(context.Background(), sg, metav1.UpdateOptions{})
@@ -35,7 +35,7 @@ func updateSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 
 // ReconcileBackupsForSnapshotGroup handles any changes to SnapshotGroups
 func ReconcileBackupsForSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
-	klog.Infof("%s/%s: reconciling", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	klog.V(5).Infof("%s/%s: reconciling", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	pvc, err := maybeCreatePVC(sg)
 	if err != nil {
 		return err
@@ -50,25 +50,25 @@ func ReconcileBackupsForSnapshotGroup(sg *snapshotgroup.SnapshotGroup) error {
 	if err != nil {
 		return err
 	}
-	klog.Infof("%s/%s: found %d existing snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(snapshots))
+	klog.V(5).Infof("%s/%s: found %d existing snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(snapshots))
 
 	toCreate, toDelete, err := getSnapshotChanges(sg.Spec.Schedule, snapshots)
 	if err != nil {
 		return err
 	}
-	klog.Infof("%s/%s: going to create %d, delete %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toCreate), len(toDelete))
+	klog.V(5).Infof("%s/%s: going to create %d, delete %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toCreate), len(toDelete))
 
 	err = deleteSnapshots(toDelete)
 	if err != nil {
 		return err
 	}
-	klog.Infof("%s/%s: deleted %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toDelete))
+	klog.V(5).Infof("%s/%s: deleted %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toDelete))
 
 	_, err = createSnapshotForIntervals(sg, toCreate)
 	if err != nil {
 		return err
 	}
-	klog.Infof("%s/%s: created %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toCreate))
+	klog.V(5).Infof("%s/%s: created %d snapshots", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, len(toCreate))
 
 	return nil
 }
@@ -80,7 +80,7 @@ func RestoreSnapshotGroup(sg *snapshotgroup.SnapshotGroup, waitForRestoreSeconds
 		err := fmt.Errorf("%s/%s: has an empty restore annotation", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 		return err
 	}
-	klog.Infof("%s/%s: restoring to %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
+	klog.V(5).Infof("%s/%s: restoring to %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, restorePoint)
 	snap, err := createSnapshotForRestore(sg)
 	if err != nil {
 		klog.Errorf("%s/%s: could not create failsafe snapshot before restore - %v", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, err)
@@ -104,6 +104,6 @@ func OnSnapshotGroupDelete(sg *snapshotgroup.SnapshotGroup) error {
 	// TODO(rbren): option to delete snapshots on group deletion
 	name := sg.ObjectMeta.Name
 	namespace := sg.ObjectMeta.Namespace
-	klog.Infof("%s/%s was deleted. Taking no action. You may want to run kubectl delete volumesnapshots --all --namespace %s", namespace, name, namespace)
+	klog.V(5).Infof("%s/%s was deleted. Taking no action. You may want to run kubectl delete volumesnapshots --all --namespace %s", namespace, name, namespace)
 	return nil
 }

@@ -45,7 +45,7 @@ func getPVC(sg *snapshotgroup.SnapshotGroup) (*corev1.PersistentVolumeClaim, err
 func maybeCreatePVC(sg *snapshotgroup.SnapshotGroup) (*corev1.PersistentVolumeClaim, error) {
 	pvc, err := getPVC(sg)
 	if err == nil {
-		klog.Infof("%s/%s: PVC found", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
+		klog.V(5).Infof("%s/%s: PVC found", pvc.ObjectMeta.Namespace, pvc.ObjectMeta.Name)
 		return pvc, nil
 	}
 	if !errors.IsNotFound(err) {
@@ -54,13 +54,13 @@ func maybeCreatePVC(sg *snapshotgroup.SnapshotGroup) (*corev1.PersistentVolumeCl
 	if sg.Spec.Claim.Name != "" {
 		return nil, fmt.Errorf("%s/%s: could not find existing PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, sg.Spec.Claim.Name)
 	}
-	klog.Infof("%s/%s: PVC not found, creating it", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	klog.V(5).Infof("%s/%s: PVC not found, creating it", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	return createPVC(sg, sg.Spec.Claim.Spec, nil)
 }
 
 func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClaimSpec, annotations map[string]string) (*corev1.PersistentVolumeClaim, error) {
 	name := getPVCName(sg)
-	klog.Infof("%s/%s: creating PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
+	klog.V(5).Infof("%s/%s: creating PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
@@ -79,7 +79,7 @@ func createPVC(sg *snapshotgroup.SnapshotGroup, spec corev1.PersistentVolumeClai
 }
 
 func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
-	klog.Infof("%s/%s: restoring PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
+	klog.V(5).Infof("%s/%s: restoring PVC", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name)
 	err := deletePVC(sg)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
@@ -102,7 +102,7 @@ func restorePVC(sg *snapshotgroup.SnapshotGroup) error {
 
 func deletePVC(sg *snapshotgroup.SnapshotGroup) error {
 	name := getPVCName(sg)
-	klog.Infof("%s/%s: deleting PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
+	klog.V(5).Infof("%s/%s: deleting PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
 	client := kube.GetClient()
 	pvcClient := client.K8s.CoreV1().PersistentVolumeClaims(sg.ObjectMeta.Namespace)
 	return pvcClient.Delete(context.TODO(), name, metav1.DeleteOptions{})
