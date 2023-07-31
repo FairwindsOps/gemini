@@ -195,7 +195,7 @@ Next, you'll need to remove any Pods that are using the PVC:
 $ kubectl scale all --all --replicas=0
 ```
 
-The copy the timestamp from the first step, and use that to annotate the `SnapshotGroup`:
+Then, copy the timestamp from the first step, and use that to annotate the `SnapshotGroup`:
 ```bash
 $ kubectl annotate snapshotgroup/test-volume --overwrite \
   "gemini.fairwinds.com/restore=1585945609"
