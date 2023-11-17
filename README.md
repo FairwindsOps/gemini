@@ -68,7 +68,7 @@ The `schedule` parameter tells Gemini how often to create snapshots, and how man
 
 For example, the following schedule tells Gemini to create a snapshot every day, keeping two weeks worth of history:
 ```yaml
-apiVersion: gemini.fairwinds.com/v1beta1
+apiVersion: gemini.fairwinds.com/v1
 kind: SnapshotGroup
 metadata:
   name: test-volume
@@ -84,7 +84,7 @@ For a more complex example, Gemini can create new snapshots every 10 minutes,
 always keep the last 3 snapshots, and preserve historical hourly, daily, monthly, and yearly snapshots.
 
 ```yaml
-apiVersion: gemini.fairwinds.com/v1beta1
+apiVersion: gemini.fairwinds.com/v1
 kind: SnapshotGroup
 metadata:
   name: test-volume
@@ -123,7 +123,7 @@ E.g. right after a new snapshot is created, you'll see snapshots for
 The following example schedules snapshots every 10 minutes for a pre-existing PVC named `postgres`.
 
 ```yaml
-apiVersion: gemini.fairwinds.com/v1beta1
+apiVersion: gemini.fairwinds.com/v1
 kind: SnapshotGroup
 metadata:
   name: test-volume
@@ -139,7 +139,7 @@ spec:
 You can also specify an entire PVC spec inside the SnapshotGroup if you'd like Gemini to create
 the PVC for you.
 ```yaml
-apiVersion: gemini.fairwinds.com/v1beta1
+apiVersion: gemini.fairwinds.com/v1
 kind: SnapshotGroup
 metadata:
   name: test-volume
@@ -164,7 +164,7 @@ most notably the name of the [snapshot class](https://kubernetes.io/docs/concept
 you want to use.
 
 ```yaml
-apiVersion: gemini.fairwinds.com/v1beta1
+apiVersion: gemini.fairwinds.com/v1
 kind: SnapshotGroup
 metadata:
   name: test-volume
