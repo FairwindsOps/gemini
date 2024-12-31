@@ -1,4 +1,4 @@
-apiVersion: gemini.fairwinds.com/v1beta1
+apiVersion: gemini.fairwinds.com/v1
 kind: SnapshotGroup
 metadata:
   name: ebs-gemini-testing
