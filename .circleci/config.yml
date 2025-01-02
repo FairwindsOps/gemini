@@ -68,7 +68,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.11
+          version: 27
       - *install_vault
       - rok8s/get_vault_env:
           vault_path: repo/global/env
