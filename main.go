@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/fairwindsops/gemini/pkg/controller"
 	"github.com/fairwindsops/gemini/pkg/kube"

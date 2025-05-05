@@ -15,6 +15,7 @@
 package snapshots
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"sort"
@@ -25,11 +26,11 @@ import (
 	"github.com/fairwindsops/gemini/pkg/kube"
 	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
 
-	snapshotsv1 "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1beta1"
+	snapshotsv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // GeminiSnapshot represents a VolumeSnapshot created by Gemini
@@ -45,7 +46,7 @@ type GeminiSnapshot struct {
 // ListSnapshots returns all snapshots associated with a particular SnapshotGroup
 func ListSnapshots(sg *snapshotgroup.SnapshotGroup) ([]*GeminiSnapshot, error) {
 	client := kube.GetClient()
-	snapshots, err := client.SnapshotClient.Namespace(sg.ObjectMeta.Namespace).List(metav1.ListOptions{})
+	snapshots, err := client.SnapshotClient.Namespace(sg.ObjectMeta.Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func ListSnapshots(sg *snapshotgroup.SnapshotGroup) ([]*GeminiSnapshot, error) {
 func GetSnapshot(namespace, name string) (*GeminiSnapshot, error) {
 	client := kube.GetClient()
 	snapClient := client.SnapshotClient.Namespace(namespace)
-	snapUnst, err := snapClient.Get(name, metav1.GetOptions{})
+	snapUnst, err := snapClient.Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +163,7 @@ func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]stri
 	}
 
 	snapClient := client.SnapshotClient.Namespace(snapshot.ObjectMeta.Namespace)
-	snap, err := snapClient.Create(&unst, metav1.CreateOptions{})
+	snap, err := snapClient.Create(context.TODO(), &unst, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +205,7 @@ func deleteSnapshots(toDelete []*GeminiSnapshot) error {
 	client := kube.GetClient()
 	for _, snapshot := range toDelete {
 		snapClient := client.SnapshotClient.Namespace(snapshot.Namespace)
-		err := snapClient.Delete(snapshot.Name, &metav1.DeleteOptions{})
+		err := snapClient.Delete(context.TODO(), snapshot.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
@@ -215,7 +216,7 @@ func deleteSnapshots(toDelete []*GeminiSnapshot) error {
 
 func waitUntilSnapshotReady(namespace, name string, readyTimeoutSeconds int) (*GeminiSnapshot, error) {
 	timeout := time.After(time.Duration(readyTimeoutSeconds) * time.Second)
-	tick := time.Tick(time.Second)
+	tick := time.Tick(time.Second) //nolint TODO: consider using time.NewTicker instead
 	for {
 		select {
 		case <-timeout:

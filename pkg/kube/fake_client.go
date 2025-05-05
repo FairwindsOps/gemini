@@ -17,7 +17,7 @@ package kube
 import (
 	"time"
 
-	snapshotsFake "github.com/kubernetes-csi/external-snapshotter/pkg/client/clientset/versioned/fake"
+	snapshotsFake "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned/fake"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicFake "k8s.io/client-go/dynamic/fake"
@@ -36,7 +36,7 @@ func SetFakeClient() *Client {
 }
 
 func createFakeClient() *Client {
-	objects := []k8sruntime.Object{}
+	var objects []k8sruntime.Object
 	k8s := k8sfake.NewSimpleClientset(objects...)
 	_ = snapshotsFake.NewSimpleClientset(objects...)
 
@@ -44,12 +44,15 @@ func createFakeClient() *Client {
 	informerFactory := snapshotGroupExternalVersions.NewSharedInformerFactory(snapshotGroupClientSet, noResync())
 	informer := informerFactory.Snapshotgroup().V1beta1().SnapshotGroups()
 
-	dynamic := dynamicFake.NewSimpleDynamicClient(k8sruntime.NewScheme())
-	snapshotClient := dynamic.Resource(schema.GroupVersionResource{
+	volumeSnapshotVersionResource := schema.GroupVersionResource{
 		Group:    VolumeSnapshotGroupName,
 		Version:  "v1beta1",
 		Resource: VolumeSnapshotKind,
+	}
+	dynamic := dynamicFake.NewSimpleDynamicClientWithCustomListKinds(k8sruntime.NewScheme(), map[schema.GroupVersionResource]string{
+		volumeSnapshotVersionResource: "VolumeSnapshotList",
 	})
+	snapshotClient := dynamic.Resource(volumeSnapshotVersionResource)
 
 	return &Client{
 		K8s:                 k8s,

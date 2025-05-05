@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/fairwindsops/gemini/pkg/kube"
 	"github.com/fairwindsops/gemini/pkg/snapshots"
@@ -36,8 +36,6 @@ const defaultSnapshotReadyTimeoutSeconds = 60
 
 // Controller represents a SnapshotGroup controller
 type Controller struct {
-	client *kube.Client
-
 	sgLister listers.SnapshotGroupLister
 	sgSynced cache.InformerSynced
 

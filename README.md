@@ -18,11 +18,8 @@
 [codecov-link]: https://codecov.io/gh/FairwindsOps/gemini
 
 Gemini is a Kubernetes CRD and operator for managing `VolumeSnapshots`. This allows you
-to back up your `PersistentVolumes` on a regular schedule, retire old backups, and restore
-backups with minimal downtime.
-
-
-**Want to learn more?** Reach out on [the Slack channel](https://fairwindscommunity.slack.com/messages/gemini) ([request invite](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g)), send an email to `opensource@fairwinds.com`, or join us for [office hours on Zoom](https://fairwindscommunity.slack.com/messages/office-hours)
+to create a snapshot of the data on your `PersistentVolumes` on a regular schedule,
+retire old snapshots, and restore snapshots with minimal downtime.
 
 > Note: Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**.
 
@@ -55,15 +52,29 @@ Before getting started with Gemini, it's a good idea to make sure you're able to
 
 ## Usage
 
-### Backup
-Gemini can schedule backups for an existing PVC, or create a new PVC to back up.
+### Snapshots
+Gemini can schedule snapshots for an existing PVC, or create a new PVC to back up.
 
 #### Schedules
 
-The `schedule` parameter tells Gemini how often to run backups, and how many historical backups to keep.
+The `schedule` parameter tells Gemini how often to create snapshots, and how many historical snapshots to keep.
 
-For example, the following schedule tells Gemini to create new backups every 10 minutes,
-always keep the last 3 backups, and keep historical hourly, daily, monthly, and yearly backups.
+For example, the following schedule tells Gemini to create a snapshot every day, keeping two weeks worth of history:
+```yaml
+apiVersion: gemini.fairwinds.com/v1beta1
+kind: SnapshotGroup
+metadata:
+  name: test-volume
+spec:
+  persistentVolumeClaim:
+    claimName: postgres
+  schedule:
+    - every: day
+      keep: 14
+```
+
+For a more complex example, Gemini can create new snapshots every 10 minutes,
+always keep the last 3 snapshots, and preserve historical hourly, daily, monthly, and yearly snapshots.
 
 ```yaml
 apiVersion: gemini.fairwinds.com/v1beta1
@@ -86,14 +97,14 @@ spec:
       keep: 1
 ```
 
-Note that `keep` specifies how many historical backups you want, _in addition_ to the most recent backup.
+Note that `keep` specifies how many historical snapshots you want, _in addition_ to the most recent snapshot.
 This way the schedule
 ```yaml
 - every: 10 minutes
   keep: 3
 ```
-will always give you _at least_ 30 minutes of backup coverage. But you will see four snapshots at any given time.
-E.g. right after a new snapshot is created, you'll see backups for
+will always give you _at least_ 30 minutes of snapshot coverage. But you will see four snapshots at any given time.
+E.g. right after a new snapshot is created, you'll see snapshots for
 * 0m ago
 * 10m ago
 * 20m ago
@@ -102,8 +113,7 @@ E.g. right after a new snapshot is created, you'll see backups for
 
 #### Using an Existing PVC
 > See the [extended example](/examples/hackmd/README.md)
-
-The following example schedules backups every 10 minutes for a pre-existing PVC named `postgres`.
+The following example schedules snapshots every 10 minutes for a pre-existing PVC named `postgres`.
 
 ```yaml
 apiVersion: gemini.fairwinds.com/v1beta1
@@ -164,7 +174,6 @@ spec:
 
 ### Restore
 > Caution: you cannot alter a PVC without some downtime!
-
 You can restore your PVC to a particular point in time using an annotation.
 
 First, check out what `VolumeSnapshots` are available:
@@ -195,5 +204,26 @@ To see gemini working end-to-end, check out [the HackMD example](examples/hackmd
 
 ## Caveats
 * Like the VolumeSnapshot API it builds on, Gemini is **currently in beta**
-* Be sure to test out both the backup and restore process to ensure Gemini is working properly
+* Be sure to test out both the snapshot and restore process to ensure Gemini is working properly
 * VolumeSnapshots simply grab the current state of the volume, without respect for things like in-flight database transactions. You may find you need to stop the application in order to get a consistently usable VolumeSnapshot.
+
+<!-- Begin boilerplate -->
+## Join the Fairwinds Open Source Community
+
+The goal of the Fairwinds Community is to exchange ideas, influence the open source roadmap,
+and network with fellow Kubernetes users.
+[Chat with us on Slack](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g)
+[join the user group](https://www.fairwinds.com/open-source-software-user-group) to get involved!
+
+<a href="https://www.fairwinds.com/t-shirt-offer?utm_source=gemini&utm_medium=gemini&utm_campaign=gemini-tshirt">
+  <img src="https://www.fairwinds.com/hubfs/Doc_Banners/Fairwinds_OSS_User_Group_740x125_v6.png" alt="Love Fairwinds Open Source? Share your business email and job title and we'll send you a free Fairwinds t-shirt!" />
+</a>
+
+## Other Projects from Fairwinds
+
+Enjoying Gemini? Check out some of our other projects:
+* [Polaris](https://github.com/FairwindsOps/Polaris) - Audit, enforce, and build policies for Kubernetes resources, including over 20 built-in checks for best practices
+* [Goldilocks](https://github.com/FairwindsOps/Goldilocks) - Right-size your Kubernetes Deployments by compare your memory and CPU settings against actual usage
+* [Pluto](https://github.com/FairwindsOps/Pluto) - Detect Kubernetes resources that have been deprecated or removed in future versions
+* [Nova](https://github.com/FairwindsOps/Nova) - Check to see if any of your Helm charts have updates available
+* [rbac-manager](https://github.com/FairwindsOps/rbac-manager) - Simplify the management of RBAC in your Kubernetes clusters
