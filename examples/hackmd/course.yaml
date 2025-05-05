@@ -1,7 +1,0 @@
-namespace: notepad
-charts:
-  hackmd:
-    namespace: notepad
-    values:
-      postgresql:
-        postgresqlPassword: thisisnotasecret

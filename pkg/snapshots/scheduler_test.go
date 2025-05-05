@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
 	"github.com/stretchr/testify/assert"
 )
 

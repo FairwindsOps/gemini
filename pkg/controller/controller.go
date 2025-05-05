@@ -28,8 +28,8 @@ import (
 
 	"github.com/fairwindsops/gemini/pkg/kube"
 	"github.com/fairwindsops/gemini/pkg/snapshots"
-	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
-	listers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/listers/snapshotgroup/v1beta1"
+	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	listers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/listers/snapshotgroup/v1"
 )
 
 const defaultSnapshotReadyTimeoutSeconds = 60
@@ -141,7 +141,7 @@ func (c *Controller) processNextWorkItem() bool {
 			return fmt.Errorf("%s/%s: error syncing %#v: %s, requeuing", item.namespace, item.name, item, err.Error())
 		}
 		c.workqueue.Forget(obj)
-		klog.Infof("%s/%s: successfully performed %s", item.namespace, item.name, taskLabels[item.task])
+		klog.V(5).Infof("%s/%s: successfully performed %s", item.namespace, item.name, taskLabels[item.task])
 		return nil
 	}(obj)
 

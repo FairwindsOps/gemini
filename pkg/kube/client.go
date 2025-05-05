@@ -15,6 +15,7 @@
 package kube
 
 import (
+	"os"
 	"context"
 	"errors"
 	"time"
@@ -31,11 +32,11 @@ import (
 	"k8s.io/client-go/restmapper"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	snapshotgroupv1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1"
-	snapshotGroupClientset "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/clientset/versioned"
-	snapshotgroupInterface "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/clientset/versioned/typed/snapshotgroup/v1beta1"
-	"github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/informers/externalversions"
-	informers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1beta1/apis/informers/externalversions/snapshotgroup/v1beta1"
+	snapshotgroupv1 "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
+	snapshotGroupClientset "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned"
+	snapshotgroupInterface "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned/typed/snapshotgroup/v1"
+	"github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions"
+	informers "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions/snapshotgroup/v1"
 )
 
 const (
@@ -51,7 +52,7 @@ type Client struct {
 	Informer              informers.SnapshotGroupInformer
 	InformerFactory       externalversions.SharedInformerFactory
 	SnapshotClient        dynamic.NamespaceableResourceInterface
-	SnapshotGroupClient   snapshotgroupInterface.SnapshotgroupV1beta1Interface
+	SnapshotGroupClient   snapshotgroupInterface.SnapshotgroupV1Interface
 	VolumeSnapshotVersion string
 }
 
@@ -84,7 +85,7 @@ func createClient() *Client {
 	}
 
 	informerFactory := externalversions.NewSharedInformerFactory(sgClientSet, time.Second*30)
-	informer := informerFactory.Snapshotgroup().V1beta1().SnapshotGroups()
+	informer := informerFactory.Snapshotgroup().V1().SnapshotGroups()
 
 	resources, err := restmapper.GetAPIGroupResources(k8s.Discovery())
 	if err != nil {
@@ -113,15 +114,17 @@ func createClient() *Client {
 	}
 	snapshotClient := dynamicInterface.Resource(vsMapping.Resource)
 
-	if _, err = snapshotgroupv1.CreateCustomResourceDefinition("crd-ns", extClientSet); err != nil {
-		panic(err)
+	if os.Getenv("GEMINI_CREATE_CRD") != "" {
+		if _, err = snapshotgroupv1.CreateCustomResourceDefinition("crd-ns", extClientSet); err != nil {
+			panic(err)
+		}
 	}
 	return &Client{
 		K8s:                   k8s,
 		Informer:              informer,
 		InformerFactory:       informerFactory,
 		SnapshotClient:        snapshotClient,
-		SnapshotGroupClient:   sgClientSet.SnapshotgroupV1beta1(),
+		SnapshotGroupClient:   sgClientSet.SnapshotgroupV1(),
 		VolumeSnapshotVersion: VolumeSnapshotGroupName + "/" + volumeSnapshotVersion,
 	}
 }

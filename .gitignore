@@ -2,3 +2,4 @@ kubeconfig.yaml
 gemini
 results.xml
 coverage.txt
+.goreleaser.yml
