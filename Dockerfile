@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 FROM golang:1.21 AS build-env
 WORKDIR /go/src/github.com/fairwindsops/gemini/
-=======
-FROM alpine:3.17
->>>>>>> efe54fd0a8bd4f77d1e7b7160169153b317cd5b3
 
 LABEL org.opencontainers.image.authors="FairwindsOps, Inc." \
       org.opencontainers.image.vendor="FairwindsOps, Inc." \
