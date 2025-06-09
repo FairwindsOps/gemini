@@ -1,11 +1,11 @@
 module github.com/fairwindsops/gemini
 
-go 1.20
+go 1.23.0
 
 require (
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0
 	github.com/stretchr/testify v1.8.2
-	golang.org/x/time v0.3.0
+	golang.org/x/time v0.12.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.27.1
 	k8s.io/apiextensions-apiserver v0.27.1
