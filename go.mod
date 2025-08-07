@@ -1,8 +1,7 @@
 module github.com/fairwindsops/gemini
 
-go 1.23.0
+go 1.23
 
-toolchain go1.24.3
 
 require (
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0
