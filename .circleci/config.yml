@@ -40,6 +40,10 @@ commands:
     - run: apk update
     # gettext provides envsubst
     - run: apk add gettext
+    # Install cosign for artifact signing
+    - run: |
+        wget -O - -q https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 | tee /usr/local/bin/cosign > /dev/null
+        chmod +x /usr/local/bin/cosign
     # Register other docker platforms, to build arm64.
     # This shouldn't be needed, why TBD.
     - run: docker run --privileged --rm tonistiigi/binfmt --install all
