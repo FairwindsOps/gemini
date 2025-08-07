@@ -1,11 +1,11 @@
 package v1
 
 import (
-	"os"
 	"context"
-	"fmt"
-	"time"
 	_ "embed"
+	"fmt"
+	"os"
+	"time"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
