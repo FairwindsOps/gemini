@@ -32,7 +32,6 @@ builds:
       - 7
 archives:
   - id: gemini
-    builds: ["gemini"]
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
 signs:
 - cmd: cosign
