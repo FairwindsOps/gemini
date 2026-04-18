@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 
 	"k8s.io/klog/v2"
 
 	"github.com/fairwindsops/gemini/pkg/controller"
+	"github.com/fairwindsops/gemini/pkg/fsr"
 	"github.com/fairwindsops/gemini/pkg/kube"
+	"github.com/fairwindsops/gemini/pkg/snapshots"
 )
 
 func init() {
@@ -16,6 +19,21 @@ func init() {
 
 func main() {
 	klog.V(5).Infof("Running in verbose mode")
+
+	// Initialize the AWS Fast Snapshot Restore client. SnapshotGroups that opt
+	// in via spec.fastSnapshotRestore.enabled use this; others ignore it.
+	// We log-and-continue on init failure so a missing AWS environment does
+	// not break clusters that don't use FSR.
+	if c, err := fsr.NewAWSClient(context.Background()); err != nil {
+		klog.Warningf("FSR: AWS client init failed (%v); SnapshotGroups with fastSnapshotRestore.enabled=true will no-op", err)
+	} else {
+		snapshots.SetFSRClient(c)
+	}
+	if azs := fsr.DefaultAZsFromEnv(); len(azs) > 0 {
+		snapshots.SetDefaultFSRAZs(azs)
+		klog.V(2).Infof("FSR: default AZs from %s = %v", fsr.DefaultAZsEnvVar, azs)
+	}
+
 	ctrl := controller.NewController()
 
 	stopCh := make(chan struct{})

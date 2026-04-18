@@ -26,6 +26,25 @@ const TimestampAnnotation = "gemini.fairwinds.com/timestamp"
 // RestoreAnnotation contains the restore point of the SnapshotGroup
 const RestoreAnnotation = "gemini.fairwinds.com/restore"
 
+// FSRStateAnnotation reports the AWS Fast Snapshot Restore state for a VolumeSnapshot.
+// Set by Gemini when the parent SnapshotGroup has fastSnapshotRestore.enabled=true.
+const FSRStateAnnotation = "gemini.fairwinds.com/fsr-state"
+
+// FSREnabledAtAnnotation records the unix timestamp at which Gemini issued
+// EnableFastSnapshotRestores for a snapshot. Used to enforce the warmup timeout.
+const FSREnabledAtAnnotation = "gemini.fairwinds.com/fsr-enabled-at"
+
+// FSR state values written to FSRStateAnnotation. The operator treats any value
+// other than FSRStateEnabled as non-selectable for hot scale-up.
+const (
+	FSRStateEnabling = "enabling"
+	FSRStateEnabled  = "enabled"
+	FSRStateFailed   = "failed"
+)
+
 const managedByAnnotation = "app.kubernetes.io/managed-by"
 const managerName = "gemini"
 const intervalsSeparator = ", "
+
+const incomingSuffix = "-incoming"
+const defaultReadyTimeoutSeconds = 60

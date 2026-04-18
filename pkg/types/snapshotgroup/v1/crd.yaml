@@ -105,6 +105,20 @@ spec:
                     addTimestamp:
                       description: Whether to add timestamp to snapshot names
                       type: boolean
+                fastSnapshotRestore:
+                  type: object
+                  description: AWS EBS Fast Snapshot Restore configuration
+                  properties:
+                    enabled:
+                      description: Whether Gemini should manage FSR for snapshots in this group
+                      type: boolean
+                    availabilityZones:
+                      description: Target AZs for FSR. If empty, the controller's default AZ list is used.
+                      type: array
+                      items:
+                        type: string
+                  required:
+                    - enabled
             status:
               type: object
               description: Status of the SnapshotGroup

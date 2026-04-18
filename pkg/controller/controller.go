@@ -157,6 +157,17 @@ func (c *Controller) syncHandler(w workItem) error {
 	var err error
 	if w.task == backupTask {
 		err = snapshots.ReconcileBackupsForSnapshotGroup(w.snapshotGroup)
+		if err == nil {
+			// FSR runs after the backup pass so it sees newly created snapshots.
+			// A non-zero requeueAfter means the FSR state machine is mid-transition
+			// (typically waiting for AWS warmup) and needs another pass.
+			requeueAfter, fsrErr := snapshots.ReconcileFSR(w.snapshotGroup)
+			if fsrErr != nil {
+				err = fsrErr
+			} else if requeueAfter > 0 {
+				c.workqueue.AddAfter(w, requeueAfter)
+			}
+		}
 	} else if w.task == restoreTask {
 		err = snapshots.RestoreSnapshotGroup(w.snapshotGroup, c.snapshotReadyTimeoutSeconds)
 	} else if w.task == deleteTask {

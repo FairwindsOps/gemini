@@ -32,6 +32,44 @@ spec:
                     spec:
                       description: PersistentVolumeClaim spec to create and backup
                       type: object
+                      properties:
+                        storageClassName:
+                          type: string
+                        accessModes:
+                          type: array
+                          items:
+                            type: string
+                        volumeName:
+                          type: string
+                        resources:
+                          type: object
+                          properties:
+                            requests:
+                              type: object
+                              additionalProperties: true
+                            limits:
+                              type: object
+                              properties:
+                                storageClassName:
+                                  type: string
+                              additionalProperties: true
+                        selector:
+                          type: object
+                          properties:
+                            matchLabels:
+                              type: object
+                              additionalProperties: true
+                            matchExpressions:
+                              type: array
+                              items:
+                                type: object
+                                additionalProperties: true
+                        volumeMode:
+                          description: 'volumeMode defines what type of volume is required by the claim. Value of Filesystem is implied when not included. This is a beta feature.'
+                          type: string
+                          enum:
+                            - Block
+                            - Filesystem
                 schedule:
                   type: array
                   items:
@@ -53,6 +91,41 @@ spec:
                         volumeSnapshotClassName:
                           description: 'VolumeSnapshotClassName is the name of the VolumeSnapshotClass requested by the VolumeSnapshot. VolumeSnapshotClassName may be left nil to indicate that the default SnapshotClass should be used. A given cluster may have multiple default Volume SnapshotClasses: one default per CSI Driver. If a VolumeSnapshot does not specify a SnapshotClass, VolumeSnapshotSource will be checked to figure out what the associated CSI Driver is, and the default VolumeSnapshotClass associated with that CSI Driver will be used. If more than one VolumeSnapshotClass exist for a given CSI Driver and more than one have been marked as default, CreateSnapshot will fail and generate an event. Empty string is not allowed for this field.'
                           type: string
+                        source:
+                          description: 'source specifies where a snapshot will be created from. This field is immutable after creation. Required.'
+                          type: object
+                          properties:
+                            persistentVolumeClaimName:
+                              description: 'persistentVolumeClaimName specifies the name of the PersistentVolumeClaim object representing the volume from which a snapshot should be created'
+                              type: string
+                            volumeSnapshotContentName:
+                              description: 'volumeSnapshotContentName specifies the name of a pre-existing VolumeSnapshotContent object representing an existing volume snapshot'
+                              type: string
+                namingConvention:
+                  type: object
+                  properties:
+                    addTimestamp:
+                      description: Whether to add timestamp to snapshot names
+                      type: boolean
+                fastSnapshotRestore:
+                  type: object
+                  description: AWS EBS Fast Snapshot Restore configuration
+                  properties:
+                    enabled:
+                      description: Whether Gemini should manage FSR for snapshots in this group
+                      type: boolean
+                    availabilityZones:
+                      description: Target AZs for FSR. If empty, the controller's default AZ list is used.
+                      type: array
+                      items:
+                        type: string
+                  required:
+                    - enabled
+            status:
+              type: object
+              description: Status of the SnapshotGroup
+      subresources:
+        status: {}
     - name: v1
       served: true
       storage: true
@@ -104,6 +177,12 @@ spec:
                               items:
                                 type: object
                                 additionalProperties: true
+                        volumeMode:
+                          description: 'volumeMode defines what type of volume is required by the claim. Value of Filesystem is implied when not included. This is a beta feature.'
+                          type: string
+                          enum:
+                            - Block
+                            - Filesystem
                 schedule:
                   type: array
                   items:
@@ -125,3 +204,38 @@ spec:
                         volumeSnapshotClassName:
                           description: 'VolumeSnapshotClassName is the name of the VolumeSnapshotClass requested by the VolumeSnapshot. VolumeSnapshotClassName may be left nil to indicate that the default SnapshotClass should be used. A given cluster may have multiple default Volume SnapshotClasses: one default per CSI Driver. If a VolumeSnapshot does not specify a SnapshotClass, VolumeSnapshotSource will be checked to figure out what the associated CSI Driver is, and the default VolumeSnapshotClass associated with that CSI Driver will be used. If more than one VolumeSnapshotClass exist for a given CSI Driver and more than one have been marked as default, CreateSnapshot will fail and generate an event. Empty string is not allowed for this field.'
                           type: string
+                        source:
+                          description: 'source specifies where a snapshot will be created from. This field is immutable after creation. Required.'
+                          type: object
+                          properties:
+                            persistentVolumeClaimName:
+                              description: 'persistentVolumeClaimName specifies the name of the PersistentVolumeClaim object representing the volume from which a snapshot should be created'
+                              type: string
+                            volumeSnapshotContentName:
+                              description: 'volumeSnapshotContentName specifies the name of a pre-existing VolumeSnapshotContent object representing an existing volume snapshot'
+                              type: string
+                namingConvention:
+                  type: object
+                  properties:
+                    addTimestamp:
+                      description: Whether to add timestamp to snapshot names
+                      type: boolean
+                fastSnapshotRestore:
+                  type: object
+                  description: AWS EBS Fast Snapshot Restore configuration
+                  properties:
+                    enabled:
+                      description: Whether Gemini should manage FSR for snapshots in this group
+                      type: boolean
+                    availabilityZones:
+                      description: Target AZs for FSR. If empty, the controller's default AZ list is used.
+                      type: array
+                      items:
+                        type: string
+                  required:
+                    - enabled
+            status:
+              type: object
+              description: Status of the SnapshotGroup
+      subresources:
+        status: {}

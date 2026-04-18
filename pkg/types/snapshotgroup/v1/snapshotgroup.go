@@ -20,10 +20,19 @@ type SnapshotGroup struct {
 }
 
 type SnapshotGroupSpec struct {
-	Claim            SnapshotClaim            `json:"persistentVolumeClaim"`
-	Template         SnapshotTemplate         `json:"template"`
-	Schedule         []SnapshotSchedule       `json:"schedule"`
-	NamingConvention SnapshotNamingConvention `json:"namingConvention"`
+	Claim               SnapshotClaim            `json:"persistentVolumeClaim"`
+	Template            SnapshotTemplate         `json:"template"`
+	Schedule            []SnapshotSchedule       `json:"schedule"`
+	NamingConvention    SnapshotNamingConvention `json:"namingConvention"`
+	FastSnapshotRestore *FastSnapshotRestoreSpec `json:"fastSnapshotRestore,omitempty"`
+}
+
+// FastSnapshotRestoreSpec configures AWS EBS Fast Snapshot Restore for snapshots
+// in this group. When Enabled is true, Gemini ensures the newest ReadyToUse
+// snapshot has FSR enabled in the listed AvailabilityZones.
+type FastSnapshotRestoreSpec struct {
+	Enabled           bool     `json:"enabled"`
+	AvailabilityZones []string `json:"availabilityZones,omitempty"`
 }
 
 type SnapshotNamingConvention struct {
