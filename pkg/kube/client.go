@@ -15,9 +15,9 @@
 package kube
 
 import (
-	"os"
 	"context"
 	"errors"
+	"os"
 	"time"
 
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -44,6 +44,8 @@ const (
 	VolumeSnapshotGroupName = "snapshot.storage.k8s.io"
 	// VolumeSnapshotKind is the kind for VolumeSnapshots
 	VolumeSnapshotKind = "VolumeSnapshot"
+	// VolumeSnapshotContentKind is the kind for VolumeSnapshotContents
+	VolumeSnapshotContentKind = "VolumeSnapshotContent"
 )
 
 // Client provides access to k8s resources
@@ -52,6 +54,7 @@ type Client struct {
 	Informer              informers.SnapshotGroupInformer
 	InformerFactory       externalversions.SharedInformerFactory
 	SnapshotClient        dynamic.NamespaceableResourceInterface
+	SnapshotContentClient dynamic.ResourceInterface
 	SnapshotGroupClient   snapshotgroupInterface.SnapshotgroupV1Interface
 	VolumeSnapshotVersion string
 }
@@ -114,6 +117,15 @@ func createClient() *Client {
 	}
 	snapshotClient := dynamicInterface.Resource(vsMapping.Resource)
 
+	vscMapping, err := restMapper.RESTMapping(schema.GroupKind{
+		Group: VolumeSnapshotGroupName,
+		Kind:  VolumeSnapshotContentKind,
+	})
+	if err != nil {
+		panic(err)
+	}
+	snapshotContentClient := dynamicInterface.Resource(vscMapping.Resource)
+
 	if os.Getenv("GEMINI_CREATE_CRD") != "" {
 		if _, err = snapshotgroupv1.CreateCustomResourceDefinition("crd-ns", extClientSet); err != nil {
 			panic(err)
@@ -124,6 +136,7 @@ func createClient() *Client {
 		Informer:              informer,
 		InformerFactory:       informerFactory,
 		SnapshotClient:        snapshotClient,
+		SnapshotContentClient: snapshotContentClient,
 		SnapshotGroupClient:   sgClientSet.SnapshotgroupV1(),
 		VolumeSnapshotVersion: VolumeSnapshotGroupName + "/" + volumeSnapshotVersion,
 	}

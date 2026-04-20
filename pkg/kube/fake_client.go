@@ -18,10 +18,12 @@ import (
 	"time"
 
 	snapshotsFake "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned/fake"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicFake "k8s.io/client-go/dynamic/fake"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 
 	snapshotGroupsFake "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/clientset/versioned/fake"
 	snapshotGroupExternalVersions "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1/apis/informers/externalversions"
@@ -49,16 +51,67 @@ func createFakeClient() *Client {
 		Version:  "v1",
 		Resource: VolumeSnapshotKind,
 	}
-	dynamic := dynamicFake.NewSimpleDynamicClientWithCustomListKinds(k8sruntime.NewScheme(), map[schema.GroupVersionResource]string{
+	volumeSnapshotContentResource := schema.GroupVersionResource{
+		Group:    VolumeSnapshotGroupName,
+		Version:  "v1",
+		Resource: "volumesnapshotcontents",
+	}
+	dynClient := dynamicFake.NewSimpleDynamicClientWithCustomListKinds(k8sruntime.NewScheme(), map[schema.GroupVersionResource]string{
 		volumeSnapshotVersionResource: "VolumeSnapshotList",
+		volumeSnapshotContentResource: "VolumeSnapshotContentList",
 	})
-	snapshotClient := dynamic.Resource(volumeSnapshotVersionResource)
+
+	// Reactor: auto-populate status on VolumeSnapshot creation and create a matching
+	// VolumeSnapshotContent so the blue-green swap can read content details in tests.
+	dynClient.PrependReactor("create", "VolumeSnapshot", func(action k8stesting.Action) (bool, k8sruntime.Object, error) {
+		createAction := action.(k8stesting.CreateAction)
+		obj := createAction.GetObject().(*unstructured.Unstructured)
+		contentName := "snapcontent-" + obj.GetName()
+		readyToUse := true
+		unstructured.SetNestedField(obj.Object, readyToUse, "status", "readyToUse")
+		unstructured.SetNestedField(obj.Object, contentName, "status", "boundVolumeSnapshotContentName")
+
+		// Create a corresponding VolumeSnapshotContent object via the tracker
+		// to avoid deadlocking on the fake client's mutex.
+		vsc := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": VolumeSnapshotGroupName + "/v1",
+				"kind":       "VolumeSnapshotContentList",
+				"metadata": map[string]interface{}{
+					"name": contentName,
+				},
+				"spec": map[string]interface{}{
+					"deletionPolicy":          "Delete",
+					"driver":                  "fake.csi.driver",
+					"volumeSnapshotClassName": "fake-snapshot-class",
+					"source": map[string]interface{}{
+						"volumeHandle": "fake-volume-handle-" + obj.GetName(),
+					},
+					"volumeSnapshotRef": map[string]interface{}{
+						"name":      obj.GetName(),
+						"namespace": obj.GetNamespace(),
+					},
+				},
+				"status": map[string]interface{}{
+					"snapshotHandle": "fake-snap-handle-" + obj.GetName(),
+					"readyToUse":     true,
+				},
+			},
+		}
+		dynClient.Tracker().Create(volumeSnapshotContentResource, vsc, "")
+
+		return false, obj, nil
+	})
+
+	snapshotClient := dynClient.Resource(volumeSnapshotVersionResource)
+	snapshotContentClient := dynClient.Resource(volumeSnapshotContentResource)
 
 	return &Client{
-		K8s:                 k8s,
-		Informer:            informer,
-		InformerFactory:     informerFactory,
-		SnapshotClient:      snapshotClient,
-		SnapshotGroupClient: snapshotGroupClientSet.SnapshotgroupV1(),
+		K8s:                   k8s,
+		Informer:              informer,
+		InformerFactory:       informerFactory,
+		SnapshotClient:        snapshotClient,
+		SnapshotContentClient: snapshotContentClient,
+		SnapshotGroupClient:   snapshotGroupClientSet.SnapshotgroupV1(),
 	}
 }
