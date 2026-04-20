@@ -55,8 +55,7 @@ func makeSG(name, ns string, fsrEnabled bool, azs []string) *snapshotgroup.Snaps
 			Annotations: map[string]string{},
 		},
 		Spec: snapshotgroup.SnapshotGroupSpec{
-			NamingConvention: snapshotgroup.SnapshotNamingConvention{AddTimestamp: true},
-			Schedule:         []snapshotgroup.SnapshotSchedule{{Every: "1 second", Keep: 1}},
+			Schedule: []snapshotgroup.SnapshotSchedule{{Every: "1 second", Keep: 1}},
 		},
 	}
 	if fsrEnabled {

@@ -23,7 +23,6 @@ type SnapshotGroupSpec struct {
 	Claim               SnapshotClaim            `json:"persistentVolumeClaim"`
 	Template            SnapshotTemplate         `json:"template"`
 	Schedule            []SnapshotSchedule       `json:"schedule"`
-	NamingConvention    SnapshotNamingConvention `json:"namingConvention"`
 	FastSnapshotRestore *FastSnapshotRestoreSpec `json:"fastSnapshotRestore,omitempty"`
 }
 
@@ -33,10 +32,6 @@ type SnapshotGroupSpec struct {
 type FastSnapshotRestoreSpec struct {
 	Enabled           bool     `json:"enabled"`
 	AvailabilityZones []string `json:"availabilityZones,omitempty"`
-}
-
-type SnapshotNamingConvention struct {
-	AddTimestamp bool `json:"addTimestamp"`
 }
 
 type SnapshotClaim struct {

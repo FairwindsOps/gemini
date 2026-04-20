@@ -45,6 +45,3 @@ const (
 const managedByAnnotation = "app.kubernetes.io/managed-by"
 const managerName = "gemini"
 const intervalsSeparator = ", "
-
-const incomingSuffix = "-incoming"
-const defaultReadyTimeoutSeconds = 60

@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -25,7 +26,6 @@ import (
 
 	"github.com/fairwindsops/gemini/pkg/kube"
 	snapshotgroup "github.com/fairwindsops/gemini/pkg/types/snapshotgroup/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	snapshotsv1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -118,29 +118,19 @@ func parseSnapshot(unst *unstructured.Unstructured) (*GeminiSnapshot, error) {
 	}, nil
 }
 
-// createSnapshot creates a new snappshot for a given SnapshotGroup
-func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]string) (*GeminiSnapshot, error) {
-	timestamp := strconv.Itoa(int(time.Now().Unix()))
-	annotations[TimestampAnnotation] = timestamp
-	annotations[managedByAnnotation] = managerName
-	annotations[GroupNameAnnotation] = sg.ObjectMeta.Name
-
+// createSnapshotWithName creates a VolumeSnapshot with a specific name from a PVC source.
+func createSnapshotWithName(sg *snapshotgroup.SnapshotGroup, annotations map[string]string, name string) (*GeminiSnapshot, error) {
 	snapshot := snapshotsv1.VolumeSnapshot{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: sg.ObjectMeta.Namespace,
-			// Name:        sg.ObjectMeta.Name + "-" + timestamp,
+			Name:        name,
+			Namespace:   sg.ObjectMeta.Namespace,
 			Annotations: annotations,
 		},
 		Spec: sg.Spec.Template.Spec,
 	}
-	if sg.Spec.NamingConvention.AddTimestamp {
-		snapshot.ObjectMeta.Name = sg.ObjectMeta.Name + "-" + timestamp
-	} else {
-		snapshot.ObjectMeta.Name = sg.ObjectMeta.Name
-	}
-	name := getPVCName(sg)
-	klog.V(3).Infof("%s/%s: creating snapshot for PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name)
-	snapshot.Spec.Source.PersistentVolumeClaimName = &name
+	pvcName := getPVCName(sg)
+	klog.V(3).Infof("%s/%s: creating snapshot %s for PVC %s", sg.ObjectMeta.Namespace, sg.ObjectMeta.Name, name, pvcName)
+	snapshot.Spec.Source.PersistentVolumeClaimName = &pvcName
 
 	marshaled, err := json.Marshal(snapshot)
 	if err != nil {
@@ -158,11 +148,10 @@ func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]stri
 	unst.Object["apiVersion"] = client.VolumeSnapshotVersion
 
 	if strings.HasSuffix(client.VolumeSnapshotVersion, "v1alpha1") {
-		// There is a slight change in `source` from alpha to beta
 		spec := unst.Object["spec"].(map[string]interface{})
 		source := spec["source"].(map[string]interface{})
 		delete(source, "persistentVolumeClaimName")
-		source["name"] = name
+		source["name"] = pvcName
 		source["kind"] = "PersistentVolumeClaim"
 		spec["source"] = source
 		unst.Object["spec"] = spec
@@ -171,23 +160,66 @@ func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]stri
 	snapClient := client.SnapshotClient.Namespace(snapshot.ObjectMeta.Namespace)
 	snap, err := snapClient.Create(context.TODO(), &unst, metav1.CreateOptions{})
 	if err != nil {
-		// If snapshot already exists,
-		if apierrors.IsAlreadyExists(err) {
-			klog.V(5).Infof("%s/%s: snapshot already exists", snapshot.ObjectMeta.Namespace, snapshot.ObjectMeta.Name)
-			snap, err = snapClient.Get(context.TODO(), snapshot.ObjectMeta.Name, metav1.GetOptions{})
-			if err != nil {
-				return nil, err
-			}
-			snapClient.Delete(context.TODO(), snapshot.ObjectMeta.Name, metav1.DeleteOptions{})
-			snap, err = snapClient.Create(context.TODO(), &unst, metav1.CreateOptions{})
-			if err != nil {
-				return nil, err
-			}
-			return nil, nil
-		}
 		return nil, err
 	}
 	return parseSnapshot(snap)
+}
+
+// createSnapshot creates a new snapshot for a given SnapshotGroup. The snapshot
+// name is always <sg-name>-<unix-timestamp>.
+func createSnapshot(sg *snapshotgroup.SnapshotGroup, annotations map[string]string) (*GeminiSnapshot, error) {
+	timestamp := strconv.Itoa(int(time.Now().Unix()))
+	annotations[TimestampAnnotation] = timestamp
+	annotations[managedByAnnotation] = managerName
+	annotations[GroupNameAnnotation] = sg.ObjectMeta.Name
+	name := sg.ObjectMeta.Name + "-" + timestamp
+	return createSnapshotWithName(sg, annotations, name)
+}
+
+// getSnapshotContentName returns the VolumeSnapshotContent name bound to the given snapshot.
+// Used by FSR to resolve a VolumeSnapshot to its AWS EBS snapshot ID.
+func getSnapshotContentName(snapshot *GeminiSnapshot) (string, error) {
+	if snapshot.VolumeSnapshot == nil ||
+		snapshot.VolumeSnapshot.Status == nil ||
+		snapshot.VolumeSnapshot.Status.BoundVolumeSnapshotContentName == nil {
+		return "", fmt.Errorf("snapshot %s/%s has no bound VolumeSnapshotContent",
+			snapshot.Namespace, snapshot.Name)
+	}
+	return *snapshot.VolumeSnapshot.Status.BoundVolumeSnapshotContentName, nil
+}
+
+// snapshotContentDetails holds the fields extracted from a dynamic
+// VolumeSnapshotContent that callers need to identify the underlying
+// CSI snapshot.
+type snapshotContentDetails struct {
+	SnapshotHandle          string
+	Driver                  string
+	VolumeSnapshotClassName string
+}
+
+// getSnapshotContentDetails reads a VolumeSnapshotContent and extracts the
+// snapshotHandle (AWS snapshot ID for the EBS CSI driver) plus driver and
+// snapshot class. Used by FSR to resolve VolumeSnapshots to AWS snapshot IDs.
+func getSnapshotContentDetails(contentName string) (*snapshotContentDetails, error) {
+	client := kube.GetClient()
+	unst, err := client.SnapshotContentClient.Get(context.TODO(), contentName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get VolumeSnapshotContent %s: %w", contentName, err)
+	}
+
+	snapshotHandle, found, err := unstructured.NestedString(unst.Object, "status", "snapshotHandle")
+	if err != nil || !found || snapshotHandle == "" {
+		return nil, fmt.Errorf("VolumeSnapshotContent %s has no status.snapshotHandle", contentName)
+	}
+
+	driver, _, _ := unstructured.NestedString(unst.Object, "spec", "driver")
+	className, _, _ := unstructured.NestedString(unst.Object, "spec", "volumeSnapshotClassName")
+
+	return &snapshotContentDetails{
+		SnapshotHandle:          snapshotHandle,
+		Driver:                  driver,
+		VolumeSnapshotClassName: className,
+	}, nil
 }
 
 func createSnapshotForIntervals(sg *snapshotgroup.SnapshotGroup, intervals []string) (*GeminiSnapshot, error) {
