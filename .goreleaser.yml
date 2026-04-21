@@ -116,32 +116,27 @@ docker_manifests:
   image_templates:
   - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
   - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
-- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Env.feature_docker_tag }}
-  # This is replaced using `envsubst`, depending on the git branch.
+- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ envOrDefault "FEATURE_DOCKER_TAG" "none" }}
   skip_push: '{{ eq .Env.GORELEASER_SKIP_FEATURE_DOCKER_TAGS "true" }}'
   image_templates:
   - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
   - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
 - name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:latest
-  # This is replaced using `envsubst`, depending on the git branch.
   skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
   image_templates:
   - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
   - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
 - name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Tag }}
-  # This is replaced using `envsubst`, depending on the git branch.
   skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
   image_templates:
   - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
   - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
 - name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Major }}
-  # This is replaced using `envsubst`, depending on the git branch.
   skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
   image_templates:
   - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
   - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
 - name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Major }}.{{ .Minor }}
-  # This is replaced using `envsubst`, depending on the git branch.
   skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
   image_templates:
   - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
