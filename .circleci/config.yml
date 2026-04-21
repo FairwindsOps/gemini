@@ -38,8 +38,6 @@ commands:
     description: Installs dependencies for CI scripts
     steps:
     - run: apk update
-    # gettext provides envsubst
-    - run: apk add gettext
     # Register other docker platforms, to build arm64.
     # This shouldn't be needed, why TBD.
     - run: docker run --privileged --rm tonistiigi/binfmt --install all
@@ -57,14 +55,14 @@ jobs:
           mkdir -p /tmp/test-results/go
           gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
   build_and_push:
-    working_directory: /go/src/github.com/fairwindsops/polaris/
+    working_directory: /go/src/github.com/fairwindsops/gemini/
     resource_class: large
     shell: /bin/bash
     docker:
       # The goreleaser image tag determins the version of Go.
       # Manually check goreleaser images for their version of Go.
       # Ref: https://hub.docker.com/r/goreleaser/goreleaser/tags
-      - image: goreleaser/goreleaser:v1.11.4
+      - image: goreleaser/goreleaser:v2.15.4
     steps:
       - checkout
       - setup_remote_docker
