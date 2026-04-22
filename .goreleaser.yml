@@ -67,11 +67,13 @@ dockers:
   # combinations of `GOOS`, `GOARCH`, and `GOARM`
 - image_templates:
   - "quay.io/fairwinds/gemini:{{ .FullCommit }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
   use: buildx
   build_flag_templates:
   - "--platform=linux/amd64"
 - image_templates:
   - "quay.io/fairwinds/gemini:{{ .FullCommit }}-arm64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
   use: buildx
   goarch: arm64
   goos: linux
@@ -110,3 +112,32 @@ docker_manifests:
   image_templates:
   - "quay.io/fairwinds/gemini:{{ .FullCommit }}-amd64"
   - "quay.io/fairwinds/gemini:{{ .FullCommit }}-arm64"
+- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}
+  image_templates:
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
+- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ envOrDefault "FEATURE_DOCKER_TAG" "none" }}
+  skip_push: '{{ eq .Env.GORELEASER_SKIP_FEATURE_DOCKER_TAGS "true" }}'
+  image_templates:
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
+- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:latest
+  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
+  image_templates:
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
+- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Tag }}
+  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
+  image_templates:
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
+- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Major }}
+  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
+  image_templates:
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
+- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Major }}.{{ .Minor }}
+  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
+  image_templates:
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
