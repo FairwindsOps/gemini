@@ -1,12 +1,8 @@
+## DO NOT EDIT - Managed by Terraform
+# yaml-language-server: $$schema=https://goreleaser.com/static/schema.json
+
 version: 2
-checksum:
-  name_template: 'checksums.txt'
-changelog:
-  sort: asc
-  filters:
-    exclude:
-    - '^docs:'
-    - '^test:'
+project_name: gemini
 env:
   - GOBIN={{ .Env.TMPDIR }}/go-bin
 before:
@@ -33,27 +29,11 @@ builds:
     ignore:
       - goos: windows
         goarch: arm
-archives:
-  - id: gemini
-    builds: ["gemini"]
-    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
-signs:
-- cmd: cosign
-  args: ["sign-blob", "--key=hashivault://cosign", "-output-signature=${signature}", "${artifact}"]
-  artifacts: checksum
-release:
-  # Branch/PR builds set GORELEASER_SKIP_RELEASE=true; tag builds set false.
-  disable: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
-  prerelease: auto
-  footer: |
-    You can verify the signature of the checksums.txt file using [cosign](https://github.com/sigstore/cosign).
-
-    ```
-    cosign verify-blob checksums.txt --signature=checksums.txt.sig  --key https://artifacts.fairwinds.com/cosign.pub
-    ```
+      - goos: windows
+        goarch: arm64
 brews:
   - name: gemini
-    skip_upload: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
+    skip_upload: "{{ eq .Env.GORELEASER_SKIP_RELEASE \"true\" }}"
     repository:
       owner: FairwindsOps
       name: homebrew-tap
@@ -62,82 +42,77 @@ brews:
     url_template: "https://github.com/FairwindsOps/gemini/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     test: |
       system "#{bin}/gemini version"
+release:
+  disable: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
+  prerelease: auto
+  github:
+    owner: FairwindsOps
+    name: gemini
+  footer: |
+    You can verify the signatures of both the checksums.txt file and the published docker images using [cosign](https://github.com/sigstore/cosign).
+
+    ```bash
+    cosign verify-blob checksums.txt --signature=checksums.txt.sig  --key https://artifacts.fairwinds.com/cosign-p256.pub
+    ```
+
+    ```bash
+    cosign verify us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Tag }} --key https://artifacts.fairwinds.com/cosign-p256.pub
+    ```
+checksum:
+  name_template: "checksums.txt"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+signs:
+  - cmd: cosign
+    args:
+      - "sign-blob"
+      - "--key=hashivault://cosign-p256"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - "--yes"
+    artifacts: all
+docker_signs:
+  - artifacts: all
+    args: ["sign", "--key=hashivault://cosign-p256", "us-docker.pkg.dev/fairwinds-ops/oss/gemini@${digest}", "-r", "--yes"]
 dockers:
-  # There are multiple images to match the `--platform` docker build flag with
-  # combinations of `GOOS`, `GOARCH`, and `GOARM`
-- image_templates:
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-amd64"
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
-  use: buildx
-  build_flag_templates:
-  - "--platform=linux/amd64"
-- image_templates:
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-arm64"
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
-  use: buildx
-  goarch: arm64
-  goos: linux
-  build_flag_templates:
-  - "--platform=linux/arm64"
+   - image_templates:
+        - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
+        - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Tag }}-amd64"
+     use: buildx
+     dockerfile: Dockerfile
+     build_flag_templates:
+        - "--platform=linux/amd64"
+   - image_templates:
+        - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64v8"
+        - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Tag }}-arm64v8"
+     use: buildx
+     goarch: arm64
+     goos: linux
+     dockerfile: Dockerfile
+     build_flag_templates:
+        - "--platform=linux/arm64/v8"
+   - image_templates:
+        - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-armv7"
+        - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Tag }}-armv7"
+     use: buildx
+     goarch: arm
+     goarm: 7
+     goos: linux
+     dockerfile: Dockerfile
+     build_flag_templates:
+        - "--platform=linux/arm/v7"
 docker_manifests:
-# Create Docker manifests that make multiple architectures available within a tag,
-# and provide partial-version tags like 2, and 2.2.
-- name_template: quay.io/fairwinds/gemini:{{ .FullCommit }}
-  image_templates:
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-amd64"
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-arm64"
-- name_template: 'quay.io/fairwinds/gemini:{{ envOrDefault "FEATURE_DOCKER_TAG" "none" }}'
-  # Tag builds set GORELEASER_SKIP_FEATURE_DOCKER_TAGS=true; feature branches set false.
-  skip_push: '{{ eq .Env.GORELEASER_SKIP_FEATURE_DOCKER_TAGS "true" }}'
-  image_templates:
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-amd64"
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-arm64"
-- name_template: quay.io/fairwinds/gemini:latest
-  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
-  image_templates:
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-amd64"
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-arm64"
-- name_template: quay.io/fairwinds/gemini:{{ .Tag }}
-  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
-  image_templates:
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-amd64"
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-arm64"
-- name_template: quay.io/fairwinds/gemini:{{ .Major }}
-  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
-  image_templates:
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-amd64"
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-arm64"
-- name_template: quay.io/fairwinds/gemini:{{ .Major }}.{{ .Minor }}
-  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
-  image_templates:
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-amd64"
-  - "quay.io/fairwinds/gemini:{{ .FullCommit }}-arm64"
-- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}
-  image_templates:
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
-- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ envOrDefault "FEATURE_DOCKER_TAG" "none" }}
-  skip_push: '{{ eq .Env.GORELEASER_SKIP_FEATURE_DOCKER_TAGS "true" }}'
-  image_templates:
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
-- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:latest
-  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
-  image_templates:
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
-- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Tag }}
-  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
-  image_templates:
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
-- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Major }}
-  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
-  image_templates:
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
-- name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Major }}.{{ .Minor }}
-  skip_push: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
-  image_templates:
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
-  - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64"
+  - name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Tag }}
+    image_templates:
+      - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Tag }}-amd64"
+      - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Tag }}-arm64v8"
+      - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .Tag }}-armv7"
+  - name_template: us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}
+    image_templates:
+      - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-amd64"
+      - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-arm64v8"
+      - "us-docker.pkg.dev/fairwinds-ops/oss/gemini:{{ .FullCommit }}-armv7"
