@@ -37,10 +37,10 @@ commands:
   install_goreleaser_dependencies:
     description: Installs dependencies for CI scripts
     steps:
-    - run: apk update
-    # Register other docker platforms, to build arm64.
-    # This shouldn't be needed, why TBD.
-    - run: docker run --privileged --rm tonistiigi/binfmt --install all
+      - run: apk update
+      # Register other docker platforms, to build arm64.
+      # This shouldn't be needed, why TBD.
+      - run: docker run --privileged --rm tonistiigi/binfmt --install all
 
 jobs:
   test:
@@ -54,8 +54,8 @@ jobs:
           go install gotest.tools/gotestsum@latest
           mkdir -p /tmp/test-results/go
           gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
-  build_and_push:
-    working_directory: /go/src/github.com/fairwindsops/gemini/
+  release:
+    working_directory: /home/circleci/go/src/github.com/fairwindsops/gemini
     resource_class: large
     shell: /bin/bash
     docker:
@@ -70,23 +70,47 @@ jobs:
       - rok8s/get_vault_env:
           vault_path: repo/global/env
       - *set_environment_variables
-      - run: docker login quay.io -u="${FAIRWINDS_QUAY_USER}" -p="${FAIRWINDS_QUAY_TOKEN}"
       - run:
           name: docker login Google Artifact Registry
           command: |
             docker login -u _json_key -p "$(echo $GCP_ARTIFACTREADWRITE_JSON_KEY | base64 -d)" us-docker.pkg.dev
       - install_goreleaser_dependencies
-      - run: scripts/goreleaser.sh
+      - run: echo 'export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"' >> $BASH_ENV
+      - run: goreleaser release --clean
+  snapshot:
+    working_directory: /home/circleci/go/src/github.com/fairwindsops/gemini
+    resource_class: large
+    shell: /bin/bash
+    docker:
+      - image: goreleaser/goreleaser:v2.15.4
+    steps:
+      - checkout
+      - setup_remote_docker
+      - install_goreleaser_dependencies
+      - run: goreleaser release --snapshot --skip=sign --clean
+      - store_artifacts:
+          path: dist
+          destination: snapshot
 
 workflows:
   version: 2
-  build_and_push:
+  test:
     jobs:
-    - test
-    - build_and_push:
-        context: org-global
-        filters:
-          branches:
-            ignore: /pull\/[0-9]+/
-          tags:
-            ignore: /^testing-.*/
+      - test
+      - snapshot:
+          requires:
+            - test
+          filters:
+            branches:
+              ignore: /pull\/[0-9]+/
+            tags:
+              ignore: /.*/
+  release:
+    jobs:
+      - release:
+          context: org-global
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^(?!testing-).+$/
