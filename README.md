@@ -214,6 +214,44 @@ To see gemini working end-to-end, check out [the CodiMD example](examples/codimd
 * Be sure to test out both the snapshot and restore process to ensure Gemini is working properly
 * VolumeSnapshots simply grab the current state of the volume, without respect for things like in-flight database transactions. You may find you need to stop the application in order to get a consistently usable VolumeSnapshot.
 
+## Notice: Registry Migration and Immutable Images (v2.0.1 → v2.1.0)
+
+Starting with **v2.1.0**:
+
+- Images moved to `us-docker.pkg.dev/fairwinds-ops/oss/gemini`
+- `quay.io/fairwinds/gemini` is deprecated
+
+### Required action
+
+```diff
+- quay.io/fairwinds/gemini:<tag>
++ us-docker.pkg.dev/fairwinds-ops/oss/gemini:<tag>
+```
+
+---
+
+## Immutable and signed images
+
+* Images are now **signed**
+* Tags are **immutable**
+* No more floating tags:
+
+  * `v2`
+  * `v2.0`
+  * `latest`
+
+Use full version tags:
+
+```
+us-docker.pkg.dev/fairwinds-ops/oss/gemini:v<major>.<minor>.<patch>
+```
+
+Or pin by digest:
+
+```
+us-docker.pkg.dev/fairwinds-ops/oss/gemini@sha256:<digest>
+```
+
 <!-- Begin boilerplate -->
 ## Join the Fairwinds Open Source Community
 
