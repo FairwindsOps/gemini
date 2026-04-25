@@ -34,12 +34,18 @@ const FSRStateAnnotation = "gemini.fairwinds.com/fsr-state"
 // EnableFastSnapshotRestores for a snapshot. Used to enforce the warmup timeout.
 const FSREnabledAtAnnotation = "gemini.fairwinds.com/fsr-enabled-at"
 
+// FSRDisabledAtAnnotation records the unix timestamp at which Gemini issued
+// DisableFastSnapshotRestores for a snapshot. Used to enforce the cooldown timeout.
+const FSRDisabledAtAnnotation = "gemini.fairwinds.com/fsr-disabled-at"
+
 // FSR state values written to FSRStateAnnotation. The operator treats any value
 // other than FSRStateEnabled as non-selectable for hot scale-up.
 const (
-	FSRStateEnabling = "enabling"
-	FSRStateEnabled  = "enabled"
-	FSRStateFailed   = "failed"
+	FSRStateEnabling  = "enabling"
+	FSRStateEnabled   = "enabled"
+	FSRStateDisabling = "disabling"
+	FSRStateDisabled  = "disabled"
+	FSRStateFailed    = "failed"
 )
 
 const managedByAnnotation = "app.kubernetes.io/managed-by"

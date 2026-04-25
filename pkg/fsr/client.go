@@ -35,6 +35,11 @@ type Client interface {
 	// snapshot/AZ pair is a no-op as far as Gemini is concerned.
 	Enable(ctx context.Context, snapshotID string, availabilityZones []string) error
 
+	// Disable releases FSR for snapshotID in the listed availability zones.
+	// Idempotent: if AWS reports a target AZ is already not in the "enabled"
+	// state, that AZ is treated as success rather than an error.
+	Disable(ctx context.Context, snapshotID string, availabilityZones []string) error
+
 	// Describe returns the current AZ-level state of the snapshot. The returned
 	// slice contains exactly one entry per AZ that AWS knows about for this
 	// snapshot; AZs with no record are omitted.
@@ -54,6 +59,27 @@ func IsWarmInAll(states []AZState, requestedAZs []string) bool {
 	}
 	for _, az := range requestedAZs {
 		if byAZ[az] != "enabled" {
+			return false
+		}
+	}
+	return true
+}
+
+// IsColdInAll reports whether the snapshot has left the "enabled"/"enabling"
+// states in every AZ in the requested list. Used by the reconciler to decide
+// when to flip the fsr-state annotation from "disabling" to "disabled".
+// An AZ that AWS no longer reports is treated as cold.
+func IsColdInAll(states []AZState, requestedAZs []string) bool {
+	if len(requestedAZs) == 0 {
+		return true
+	}
+	byAZ := make(map[string]string, len(states))
+	for _, s := range states {
+		byAZ[s.AvailabilityZone] = s.State
+	}
+	for _, az := range requestedAZs {
+		switch byAZ[az] {
+		case "enabled", "enabling", "optimizing":
 			return false
 		}
 	}

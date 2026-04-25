@@ -17,6 +17,7 @@ package fsr
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -26,6 +27,7 @@ import (
 // ec2API is the subset of the AWS EC2 client we need. Lets tests inject a stub.
 type ec2API interface {
 	EnableFastSnapshotRestores(ctx context.Context, params *ec2.EnableFastSnapshotRestoresInput, optFns ...func(*ec2.Options)) (*ec2.EnableFastSnapshotRestoresOutput, error)
+	DisableFastSnapshotRestores(ctx context.Context, params *ec2.DisableFastSnapshotRestoresInput, optFns ...func(*ec2.Options)) (*ec2.DisableFastSnapshotRestoresOutput, error)
 	DescribeFastSnapshotRestores(ctx context.Context, params *ec2.DescribeFastSnapshotRestoresInput, optFns ...func(*ec2.Options)) (*ec2.DescribeFastSnapshotRestoresOutput, error)
 }
 
@@ -76,6 +78,54 @@ func (c *awsClient) Enable(ctx context.Context, snapshotID string, azs []string)
 		return fmt.Errorf("EnableFastSnapshotRestores(%s) reported unsuccessful with no detail", snapshotID)
 	}
 	return nil
+}
+
+func (c *awsClient) Disable(ctx context.Context, snapshotID string, azs []string) error {
+	out, err := c.ec2.DisableFastSnapshotRestores(ctx, &ec2.DisableFastSnapshotRestoresInput{
+		SourceSnapshotIds: []string{snapshotID},
+		AvailabilityZones: azs,
+	})
+	if err != nil {
+		return fmt.Errorf("DisableFastSnapshotRestores(%s): %w", snapshotID, err)
+	}
+	// Same per-AZ error shape as Enable, but we swallow "not in the enabled state"
+	// errors: they mean the target AZ is already disabled (either never enabled,
+	// someone disabled it manually, or a previous call already succeeded).
+	for _, u := range out.Unsuccessful {
+		for _, se := range u.FastSnapshotRestoreStateErrors {
+			if se.Error == nil {
+				continue
+			}
+			code, msg := "", ""
+			if se.Error.Code != nil {
+				code = *se.Error.Code
+			}
+			if se.Error.Message != nil {
+				msg = *se.Error.Message
+			}
+			if isAlreadyDisabled(code, msg) {
+				continue
+			}
+			var az string
+			if se.AvailabilityZone != nil {
+				az = *se.AvailabilityZone
+			}
+			return fmt.Errorf("DisableFastSnapshotRestores(%s) unsuccessful in az=%s code=%s: %s",
+				snapshotID, az, code, msg)
+		}
+	}
+	return nil
+}
+
+// isAlreadyDisabled reports whether an AWS per-AZ FSR state error indicates
+// the snapshot was already not in the "enabled" state. AWS does not document
+// a stable typed error for this, so we match the message substring the API
+// has historically used ("not in the enabled state"). A conservative match —
+// if AWS changes the wording we'll briefly surface these as errors until we
+// update the check, which is preferable to silently swallowing real failures.
+func isAlreadyDisabled(_, message string) bool {
+	m := strings.ToLower(message)
+	return strings.Contains(m, "not in the enabled state") || strings.Contains(m, "not enabled")
 }
 
 func (c *awsClient) Describe(ctx context.Context, snapshotID string) ([]AZState, error) {

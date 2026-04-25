@@ -28,13 +28,17 @@ type FakeClient struct {
 	states map[string]map[string]string
 	// EnableErr, if non-nil, is returned from the next Enable call.
 	EnableErr error
+	// DisableErr, if non-nil, is returned from the next Disable call.
+	DisableErr error
 	// DescribeErr, if non-nil, is returned from the next Describe call.
 	DescribeErr error
 	// EnableCalls records every (snapshotID, azs) pair passed to Enable.
 	EnableCalls []EnableCall
+	// DisableCalls records every (snapshotID, azs) pair passed to Disable.
+	DisableCalls []EnableCall
 }
 
-// EnableCall captures one invocation of Enable for assertion in tests.
+// EnableCall captures one invocation of Enable (or Disable) for assertion in tests.
 type EnableCall struct {
 	SnapshotID string
 	AZs        []string
@@ -61,6 +65,29 @@ func (f *FakeClient) Enable(_ context.Context, snapshotID string, azs []string) 
 		// Don't downgrade an already-enabled state.
 		if cur, ok := f.states[snapshotID][az]; !ok || cur == "" {
 			f.states[snapshotID][az] = "enabling"
+		}
+	}
+	return nil
+}
+
+func (f *FakeClient) Disable(_ context.Context, snapshotID string, azs []string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.DisableErr != nil {
+		err := f.DisableErr
+		f.DisableErr = nil
+		return err
+	}
+	f.DisableCalls = append(f.DisableCalls, EnableCall{SnapshotID: snapshotID, AZs: append([]string(nil), azs...)})
+	if _, ok := f.states[snapshotID]; !ok {
+		f.states[snapshotID] = map[string]string{}
+	}
+	for _, az := range azs {
+		// Mirror Enable's behaviour: move enabled/enabling AZs into "disabling".
+		// AZs with no record or already-cold states are left alone (idempotent).
+		switch f.states[snapshotID][az] {
+		case "enabled", "enabling", "optimizing":
+			f.states[snapshotID][az] = "disabling"
 		}
 	}
 	return nil
