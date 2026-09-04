@@ -6,7 +6,7 @@ orbs:
 executors:
   golang-exec:
     docker:
-      - image: cimg/go:1.23
+      - image: cimg/go:1.25
 
 references:
   install_vault: &install_vault
@@ -47,7 +47,7 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/gemini
 
     docker:
-      - image: cimg/go:1.23
+      - image: cimg/go:1.25
     steps:
       - checkout
       - run: |
@@ -62,7 +62,7 @@ jobs:
       # The goreleaser image tag determins the version of Go.
       # Manually check goreleaser images for their version of Go.
       # Ref: https://hub.docker.com/r/goreleaser/goreleaser/tags
-      - image: goreleaser/goreleaser:v2.15.4
+      - image: goreleaser/goreleaser:v2.18.0
     steps:
       - checkout
       - setup_remote_docker
@@ -82,7 +82,7 @@ jobs:
     resource_class: large
     shell: /bin/bash
     docker:
-      - image: goreleaser/goreleaser:v2.15.4
+      - image: goreleaser/goreleaser:v2.18.0
     steps:
       - checkout
       - setup_remote_docker
