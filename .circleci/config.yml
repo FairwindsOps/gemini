@@ -1,116 +1,125 @@
+## DO NOT EDIT - Managed by Terraform
 version: 2.1
 
 orbs:
-  rok8s: fairwinds/rok8s-scripts@11
-
-executors:
-  golang-exec:
-    docker:
-      - image: cimg/go:1.23
+  rok8s: fairwinds/rok8s-scripts@17.0.0
 
 references:
-  install_vault: &install_vault
+  install_vault_machine: &install_vault_machine
     run:
       name: install hashicorp vault
       command: |
-        apk --update add curl yq
+        sudo apt-get update -y && sudo apt-get install -y curl unzip
         cd /tmp
-        curl -LO https://releases.hashicorp.com/vault/1.9.2/vault_1.9.2_linux_amd64.zip
-        unzip vault_1.9.2_linux_amd64.zip
-        mv vault /usr/bin/vault
-
-  set_environment_variables: &set_environment_variables
+        curl -LO https://releases.hashicorp.com/vault/1.21.4/vault_1.21.4_linux_amd64.zip
+        echo '889b681990fe221b884b7932fa9c9dd0ee9811b9349554f1aa287ab63c9f3dae  vault_1.21.4_linux_amd64.zip' | sha256sum -c
+        unzip -o vault_1.21.4_linux_amd64.zip
+        sudo mv vault /usr/bin/vault
+  setup_qemu_binfmt: &setup_qemu_binfmt
     run:
-      name: Set Environment Variables
+      name: Setup QEMU for multi-arch Docker builds
       command: |
-        echo 'export CI_SHA1=$CIRCLE_SHA1' >> ${BASH_ENV}
-        echo 'export CI_BRANCH=$CIRCLE_BRANCH' >> ${BASH_ENV}
-        echo 'export CI_BUILD_NUM=$CIRCLE_BUILD_NUM' >> ${BASH_ENV}
-        echo 'export CI_TAG=$CIRCLE_TAG' >> ${BASH_ENV}
-        echo 'export PUSH_ALL_VERSION_TAGS=true' >> ${BASH_ENV}
-        echo 'export GOPROXY=https://proxy.golang.org' >> ${BASH_ENV}
-        echo 'export GO111MODULE=on' >> ${BASH_ENV}
-        echo 'export GOFLAGS=-mod=mod' >> ${BASH_ENV}
-        echo 'export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"' >> $BASH_ENV
-
-commands:
-  install_goreleaser_dependencies:
-    description: Installs dependencies for CI scripts
-    steps:
-      - run: apk update
-      # Register other docker platforms, to build arm64.
-      # This shouldn't be needed, why TBD.
-      - run: docker run --privileged --rm tonistiigi/binfmt --install all
+        sudo apt-get update -y
+        sudo apt-get install -y qemu-user-static binfmt-support
+        docker buildx create --use || true
+        docker buildx inspect --bootstrap
 
 jobs:
   test:
-    working_directory: /home/circleci/go/src/github.com/fairwindsops/gemini
-
     docker:
-      - image: cimg/go:1.23
+      - image: cimg/go:1.27.1
     steps:
       - checkout
-      - run: |
-          go install gotest.tools/gotestsum@latest
-          mkdir -p /tmp/test-results/go
-          gotestsum --junitfile /tmp/test-results/go/results.xml -- ./pkg/... -cover -covermode atomic -coverpkg=./... -coverprofile=coverage.txt
-  release:
-    working_directory: /home/circleci/go/src/github.com/fairwindsops/gemini
-    resource_class: large
-    shell: /bin/bash
-    docker:
-      # The goreleaser image tag determins the version of Go.
-      # Manually check goreleaser images for their version of Go.
-      # Ref: https://hub.docker.com/r/goreleaser/goreleaser/tags
-      - image: goreleaser/goreleaser:v2.15.4
-    steps:
-      - checkout
-      - setup_remote_docker
-      - *install_vault
-      - rok8s/get_vault_env:
-          vault_path: repo/global/env
-      - *set_environment_variables
       - run:
-          name: docker login Google Artifact Registry
+          name: Go Mod Download
+          command: go mod download && go mod verify
+      - run:
+          name: test
           command: |
-            docker login -u _json_key -p "$(echo $GCP_ARTIFACTREADWRITE_JSON_KEY | base64 -d)" us-docker.pkg.dev
-      - install_goreleaser_dependencies
-      - run: echo 'export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"' >> $BASH_ENV
-      - run: goreleaser release --clean
+            go test -v -coverprofile=coverage.txt -covermode=atomic ./pkg/...
+            go vet ./...
   snapshot:
-    working_directory: /home/circleci/go/src/github.com/fairwindsops/gemini
+    machine:
+      image: ubuntu-2204:current
     resource_class: large
-    shell: /bin/bash
-    docker:
-      - image: goreleaser/goreleaser:v2.15.4
     steps:
       - checkout
-      - setup_remote_docker
-      - install_goreleaser_dependencies
-      - run: goreleaser release --snapshot --skip=sign --clean
+      - *setup_qemu_binfmt
+      - run:
+          name: Run GoReleaser snapshot
+          command: |
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v "$(pwd):/workspace" -w /workspace \
+              -e CIRCLE_SHA1 \
+              -e CIRCLE_BRANCH \
+              -e CIRCLE_TAG \
+              goreleaser/goreleaser:v2.18.1 release --snapshot --skip=sign
       - store_artifacts:
           path: dist
           destination: snapshot
+  release:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large
+    shell: /bin/bash
+    steps:
+      - checkout
+      - *install_vault_machine
+      - rok8s/get_vault_env:
+          vault_path: repo/global/env
+      - run:
+          name: docker login Google Artifact Registry
+          command: |
+            echo "$GCP_ARTIFACTREADWRITE_JSON_KEY" | base64 -d | docker login -u _json_key --password-stdin us-docker.pkg.dev
+      - *setup_qemu_binfmt
+      - run:
+          name: Run GoReleaser release
+          command: |
+            export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v "$(pwd):/workspace" -w /workspace \
+              -v "${HOME}/.docker:/root/.docker" \
+              -e GORELEASER_CURRENT_TAG \
+              -e CIRCLE_TAG \
+              -e CIRCLE_SHA1 \
+              -e GO111MODULE=on \
+              -e GITHUB_TOKEN \
+              -e VAULT_ADDR \
+              -e VAULT_TOKEN \
+              goreleaser/goreleaser:v2.18.1 release
 
 workflows:
   version: 2
-  test:
+  test_and_build:
     jobs:
-      - test
+      - test:
+          filters:
+            tags:
+              ignore: /.*/
       - snapshot:
           requires:
             - test
           filters:
             branches:
-              ignore: /pull\/[0-9]+/
+              only: /.*/
             tags:
               ignore: /.*/
   release:
     jobs:
+      - test:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*/
       - release:
+          requires:
+            - test
           context: org-global
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^(?!testing-).+$/
+              only: /v.*/
